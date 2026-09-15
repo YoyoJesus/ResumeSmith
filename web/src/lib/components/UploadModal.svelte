@@ -160,18 +160,12 @@
 			onkeydown={onDialogKeydown}
 		>
 			<div class="flex items-center justify-between gap-3">
-				<h2 id="resume-upload-title" class="text-lg font-semibold">Upload your resume</h2>
-				<button class="secondary px-2 py-1 text-sm" onclick={close} disabled={isBusy} aria-label="Close">X</button>
+				<h2 id="resume-upload-title" class="text-lg font-semibold">Import resume</h2>
+				<button class="secondary px-2 py-1 text-sm" onclick={close} disabled={isBusy}>Close</button>
 			</div>
 
 			{#if status === 'idle'}
-				<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950">
-					<p class="font-medium">Your document is checked before AI sees it</p>
-					<p class="mt-1 text-xs">
-						Text extraction and Tesseract OCR run in this browser. You can review readability metrics and a text preview
-						before choosing whether to send the extracted text to AI.
-					</p>
-				</div>
+				<p class="text-sm text-gray-600">Text is read in your browser. You'll preview it before anything goes to AI.</p>
 				<button
 					type="button"
 					class="w-full rounded-lg border-2 border-dashed p-8 text-center transition-colors {dragOver
@@ -264,18 +258,17 @@
 							disabled={result.metrics.status === 'fail'}
 						/>
 						<span class="text-sm font-normal text-gray-700">
-							I reviewed the preview and agree to send this extracted text to the configured AI service. The original
-							document stays in my browser.
+							Send this text to AI to fill in the form. The original file stays in my browser.
 						</span>
 					</label>
 
 					<div class="flex justify-between gap-2">
-						<button class="secondary" type="button" onclick={reset}>Choose another</button>
+						<button class="secondary" type="button" onclick={reset}>Pick another file</button>
 						<button
 							class="primary"
 							type="button"
 							onclick={sendToAI}
-							disabled={!acknowledged || result.metrics.status === 'fail'}>Send text to AI</button
+							disabled={!acknowledged || result.metrics.status === 'fail'}>Fill form with AI</button
 						>
 					</div>
 				</div>

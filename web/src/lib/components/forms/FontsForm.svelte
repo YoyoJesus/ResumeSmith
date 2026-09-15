@@ -14,7 +14,7 @@
 		<h2 class="text-lg font-semibold">Font Size Settings</h2>
 		<button class="secondary text-sm" onclick={resetFontSettings}>Reset to Default</button>
 	</div>
-	<p class="text-sm text-gray-600">Adjust font sizes in points (pt). Changes apply to the PDF output.</p>
+	<p class="text-sm text-gray-600">Sizes are in points (pt).</p>
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 		<div>
 			<label>Base Text Size</label>

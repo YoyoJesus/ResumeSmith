@@ -19,7 +19,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Clearance</h2>
-		<button class="primary text-sm" onclick={addClearance}>+ Add</button>
+		<button class="primary text-sm" onclick={addClearance}>+ Add clearance</button>
 	</div>
 	{#each data.clearance as clearance, i}
 		<div class="border rounded-lg p-4 space-y-3 bg-gray-50">
@@ -59,7 +59,7 @@
 						/>
 					</div>
 				</div>
-				<button class="danger text-sm px-2 py-1 ml-2" onclick={() => removeClearance(clearance.id)}>X</button>
+				<button class="danger text-sm px-2 py-1 ml-2" onclick={() => removeClearance(clearance.id)}>Remove</button>
 			</div>
 		</div>
 	{/each}

@@ -18,7 +18,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Projects</h2>
-		<button class="primary text-sm" onclick={addProject}>+ Add</button>
+		<button class="primary text-sm" onclick={addProject}>+ Add project</button>
 	</div>
 	{#each data.projects as project, i}
 		<EntryCard index={i} onRemove={() => removeProject(project.id)}>

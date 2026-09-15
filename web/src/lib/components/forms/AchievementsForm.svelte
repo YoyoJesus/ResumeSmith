@@ -16,7 +16,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Achievements / Certifications</h2>
-		<button class="primary text-sm" onclick={addAchievement}>+ Add</button>
+		<button class="primary text-sm" onclick={addAchievement}>+ Add achievement</button>
 	</div>
 	{#each data.achievements as achievement, i}
 		<div class="border rounded-lg p-4 space-y-3 bg-gray-50">
@@ -40,7 +40,7 @@
 						/>
 					</div>
 				</div>
-				<button class="danger text-sm px-2 py-1 ml-2" onclick={() => removeAchievement(achievement.id)}>X</button>
+				<button class="danger text-sm px-2 py-1 ml-2" onclick={() => removeAchievement(achievement.id)}>Remove</button>
 			</div>
 			<div>
 				<label>Description</label>

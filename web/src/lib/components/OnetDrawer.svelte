@@ -202,15 +202,15 @@
 			if (changes === 0) {
 				tailorNote =
 					edits.length === 0
-						? "The AI didn't find anything in this occupation your resume can already back up."
-						: 'Everything the AI suggested is already on your resume.';
+						? 'No changes. Nothing in this job matched your resume.'
+						: 'No changes. Your resume already covers these suggestions.';
 			} else {
 				const revised = result.paths.length;
 				const parts = [
 					revised ? `${revised} ${revised === 1 ? 'item added or rewritten' : 'items added or rewritten'}` : '',
 					result.removed ? `${result.removed} ${result.removed === 1 ? 'bullet removed' : 'bullets removed'}` : '',
 				].filter(Boolean);
-				tailorNote = `${parts.join(', ')}. Rewritten and added text is highlighted in purple; review every change before exporting.`;
+				tailorNote = `${parts.join(', ')}. Changes are highlighted in purple.`;
 			}
 		} catch {
 			if (controller.signal.aborted) return;
@@ -302,7 +302,7 @@
 	>
 		<div class="flex items-center justify-between border-b border-gray-200 px-4 py-3">
 			<h2 id="tailor-dialog-title" class="text-lg font-semibold">Tailor to a job</h2>
-			<button class="secondary px-2 py-1 text-sm" onclick={close} aria-label="Close">X</button>
+			<button class="secondary px-2 py-1 text-sm" onclick={close}>Close</button>
 		</div>
 
 		<div class="flex-1 overflow-y-auto px-4 py-4">
@@ -341,32 +341,22 @@
 				{:else if searched}
 					<p class="mt-3 text-sm text-gray-500">No occupations matched that search.</p>
 				{:else}
-					<p class="mt-3 text-sm text-gray-500">
-						Pick the job you're applying for and its O*NET tasks, technologies, and competencies show up here. Each one
-						gets a <span class="font-medium">+ Add</span> button that copies its wording into a part of your resume you choose.
-					</p>
+					<p class="mt-3 text-sm text-gray-500">Search for the job you're applying to.</p>
 				{/if}
 			{:else}
 				<div class="mb-4 border-b border-gray-200 pb-3">
 					<div class="flex items-start justify-between gap-2">
 						<h3 class="font-semibold">{occupation.title}</h3>
-						<button class="secondary shrink-0 px-2 py-1 text-xs" onclick={changeOccupation}>Change</button>
+						<button class="secondary shrink-0 px-2 py-1 text-xs" onclick={changeOccupation}>Change job</button>
 					</div>
 					<p class="mt-1 text-xs text-gray-500">{occupation.code}</p>
 					<p class="mt-2 text-sm text-gray-600">{occupation.description}</p>
-					<p class="mt-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
-						Nothing here changes your resume on its own. Use <span class="font-medium">+ Add</span> on any item to copy its
-						wording in, and you pick which experience, project, or skill category it lands in. Anything you add is highlighted
-						purple so you can reword it.
-					</p>
 
 					<button class="primary mt-3 w-full text-sm disabled:opacity-60" onclick={autoTailor} disabled={tailoring}>
-						{tailoring ? 'Tailoring...' : 'Auto-tailor with AI'}
+						{tailoring ? 'Tailoring...' : 'Tailor with AI'}
 					</button>
 					<p class="mt-1 text-xs text-gray-500">
-						Picks grounded improvements across your profile, projects, experience, education, leadership, skills, and
-						achievements. If your resume is over one page, it tightens existing content instead of adding more. Review
-						every change before you export &mdash; AI can overstate what you have done.
+						AI rewrites your resume for this job. Review every change, since AI can overstate your experience.
 					</p>
 					{#if tailorNote}
 						<p class="mt-2 rounded border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700">{tailorNote}</p>
@@ -386,7 +376,7 @@
 						>
 							<span class:text-gray-400={unavailable}>{onetSectionLabels[name]}</span>
 							<span class="text-xs text-gray-500">
-								{unavailable ? 'not published' : sectionCount(occupation, name)}
+								{unavailable ? 'No data' : sectionCount(occupation, name)}
 							</span>
 						</button>
 
@@ -430,7 +420,8 @@
 															<p class="flex-1 text-sm text-gray-700">
 																{example.name}
 																{#if example.hot}
-																	<span class="ml-1 rounded bg-orange-100 px-1 py-0.5 text-xs text-orange-800">hot</span
+																	<span class="ml-1 rounded bg-orange-100 px-1 py-0.5 text-xs text-orange-800"
+																		>In demand</span
 																	>
 																{/if}
 															</p>

@@ -31,7 +31,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Work Experience</h2>
-		<button class="primary text-sm" onclick={addWorkExperience}>+ Add</button>
+		<button class="primary text-sm" onclick={addWorkExperience}>+ Add job</button>
 	</div>
 	{#each data.workExperience as work, i}
 		<EntryCard index={i} onRemove={() => removeWorkExperience(work.id)}>

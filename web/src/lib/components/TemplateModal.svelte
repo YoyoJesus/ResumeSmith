@@ -170,24 +170,20 @@
 		>
 			<div class="flex items-center justify-between gap-3">
 				<div>
-					<h2 id="template-dialog-title" class="text-lg font-semibold">Use a custom resume template</h2>
-					{#if currentTemplate}
-						<p class="mt-0.5 text-xs text-green-700">Active: {currentTemplate.name}</p>
-					{/if}
+					<h2 id="template-dialog-title" class="text-lg font-semibold">Resume template</h2>
+					<p class="mt-0.5 text-xs {currentTemplate ? 'text-green-700' : 'text-gray-500'}">
+						{currentTemplate ? `Using: ${currentTemplate.name}` : 'Using the built-in template'}
+					</p>
 				</div>
-				<button class="secondary px-2 py-1 text-sm" onclick={close} disabled={isBusy} aria-label="Close">X</button>
+				<button class="secondary px-2 py-1 text-sm" onclick={close} disabled={isBusy}>Close</button>
 			</div>
 
 			<div class="rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950">
-				<p class="font-medium">Template compatibility</p>
-				<p class="mt-1">
-					A Typst file must define the same resume and section helpers as the starter template and include this marker:
-				</p>
+				<p>Typst templates must keep the starter's helpers and this marker. Everything after it is replaced.</p>
 				<code class="mt-2 block overflow-x-auto rounded bg-white/70 px-2 py-1 text-xs">{RESUME_CONTENT_MARKER}</code>
-				<p class="mt-2 text-xs">Content after the marker is replaced with the resume currently in the form.</p>
-				<p class="mt-1 text-xs">A valid template is kept only for this browser tab's session.</p>
-				<p class="mt-1 text-xs">Word templates are sent to AI for conversion; Typst templates stay local.</p>
-				<p class="mt-1 text-xs">Images and Word-only effects may be approximated or omitted.</p>
+				<p class="mt-2 text-xs">
+					Word files are converted by AI and may lose images or styling. Templates last until you close this tab.
+				</p>
 				<button class="secondary mt-3 text-xs" type="button" onclick={downloadStarterTemplate}
 					>Download starter template</button
 				>
@@ -196,8 +192,7 @@
 			<label class="flex cursor-pointer items-start gap-2 rounded-md border border-gray-200 p-3">
 				<input class="mt-0.5" type="checkbox" bind:checked={acknowledged} disabled={isBusy} />
 				<span class="text-sm font-normal text-gray-700">
-					I understand the template requirements and that a DOCX file will be sent to the configured AI service for
-					conversion.
+					I understand the requirements above and that Word files are sent to AI.
 				</span>
 			</label>
 
@@ -242,12 +237,12 @@
 			<div class="flex justify-between gap-2">
 				{#if currentTemplate}
 					<button class="danger" type="button" onclick={useDefaultTemplate} disabled={isBusy}
-						>Use default template</button
+						>Remove custom template</button
 					>
 				{:else}
 					<span></span>
 				{/if}
-				<button class="secondary" type="button" onclick={close} disabled={isBusy}>Cancel</button>
+				<button class="secondary" type="button" onclick={close} disabled={isBusy}>Done</button>
 			</div>
 		</div>
 	</div>

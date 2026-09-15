@@ -16,7 +16,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Skills</h2>
-		<button class="primary text-sm" onclick={addSkillCategory}>+ Add</button>
+		<button class="primary text-sm" onclick={addSkillCategory}>+ Add category</button>
 	</div>
 	{#each data.skills as skill, i}
 		<div class="border rounded-lg p-4 bg-gray-50">
@@ -41,7 +41,7 @@
 						/>
 					</div>
 				</div>
-				<button class="danger text-sm px-2 py-1" onclick={() => removeSkillCategory(skill.id)}>X</button>
+				<button class="danger text-sm px-2 py-1" onclick={() => removeSkillCategory(skill.id)}>Remove</button>
 			</div>
 		</div>
 	{/each}

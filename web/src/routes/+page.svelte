@@ -148,15 +148,8 @@
 					<div
 						class="mb-4 flex items-start justify-between gap-2 rounded border border-purple-300 bg-purple-50 px-3 py-2 text-sm text-purple-800"
 					>
-						<span
-							>The highlighted (purple) fields were filled in for you, by AI extraction or from O*NET - please review
-							them for accuracy.</span
-						>
-						<button
-							class="secondary text-xs px-2 py-0.5"
-							onclick={() => (showReviewBanner = false)}
-							aria-label="Dismiss">X</button
-						>
+						<span>Purple fields were filled in automatically. Check them before exporting.</span>
+						<button class="secondary text-xs px-2 py-0.5" onclick={() => (showReviewBanner = false)}>Dismiss</button>
 					</div>
 				{/if}
 				<TabBar {tabs} bind:activeTab />
