@@ -15,11 +15,13 @@
 	} = $props();
 
 	let copied = $state(false);
+	let copiedTimer: ReturnType<typeof setTimeout> | undefined;
 
 	async function copyToClipboard() {
 		await navigator.clipboard.writeText(typstCode);
 		copied = true;
-		setTimeout(() => (copied = false), 1500);
+		clearTimeout(copiedTimer);
+		copiedTimer = setTimeout(() => (copied = false), 1500);
 	}
 </script>
 
