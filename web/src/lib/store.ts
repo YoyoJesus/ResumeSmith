@@ -30,6 +30,7 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		leadership: arrays('leadership'),
 		skills: arrays('skills'),
 		achievements: arrays('achievements'),
+		publications: arrays('publications'),
 		sectionOrder,
 	};
 }

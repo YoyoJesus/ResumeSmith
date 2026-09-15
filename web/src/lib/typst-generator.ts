@@ -5,6 +5,7 @@ import type {
 	Education,
 	Leadership,
 	Achievement,
+	Publication,
 	SkillCategory,
 	Clearance,
 	SectionId,
@@ -167,6 +168,28 @@ function generateAchievements(achievements: Achievement[]): string {
 ${achievementItems}`;
 }
 
+// Reuses achievement-heading so existing custom templates keep compiling without a new helper.
+function generatePublications(publications: Publication[]): string {
+	const items = publications
+		.filter((p) => p.title.trim())
+		.map((p) => {
+			const details = [
+				p.authors.trim() ? typstMarkup(p.authors) : '',
+				p.venue.trim() ? `_${typstMarkup(p.venue)}_` : '',
+			].filter(Boolean);
+			const url = typstUrl(p.url);
+			if (url) details.push(`#link("${typstString(url)}")`);
+			const body = details.length ? `\n${details.join('. ')}` : '';
+			return `#achievement-heading("${typstString(p.title)}", "${typstString(formatDisplayDate(p.date))}")[${body}]`;
+		})
+		.join('\n\n');
+
+	if (!items) return '';
+
+	return `= Publications
+${items}`;
+}
+
 function generateClearance(clearance: Clearance[]): string {
 	if (clearance.length === 0) return '';
 
@@ -196,6 +219,7 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
 		leadership,
 		skills,
 		achievements,
+		publications,
 		colors,
 		fonts,
 		sectionOrder,
@@ -217,6 +241,7 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
 			filledLeadership.length > 0 ? `= Leadership\n${filledLeadership.map(generateLeadership).join('\n\n')}` : '',
 		skills: generateSkills(skills),
 		achievements: generateAchievements(achievements),
+		publications: generatePublications(publications),
 	};
 
 	// Generate sections in the specified order

@@ -41,6 +41,41 @@ describe('generateTypstCode clearance section', () => {
 	});
 });
 
+describe('generateTypstCode publications section', () => {
+	const paper = {
+		id: 'p1',
+		title: 'Fast Parsing',
+		authors: 'A. Test',
+		venue: 'Journal of Tests',
+		date: '2022-05',
+		url: '',
+	};
+
+	it('omits the Publications heading when no entry has a title', () => {
+		const code = generateTypstCode(withOverrides({ publications: [{ ...paper, title: ' ' }] }));
+		expect(code).not.toContain('= Publications');
+	});
+
+	it('renders title, date, authors, and an italic venue', () => {
+		const content = contentOf(withOverrides({ publications: [paper] }));
+		expect(content).toContain('= Publications');
+		expect(content).toContain('#achievement-heading("Fast Parsing", "May 2022")[\nA. Test. _Journal of Tests_]');
+	});
+
+	it('links a safe URL and drops a javascript URL', () => {
+		const safe = contentOf(withOverrides({ publications: [{ ...paper, url: 'doi.org/10.1/x' }] }));
+		expect(safe).toContain('#link("https://doi.org/10.1/x")');
+		const unsafe = contentOf(withOverrides({ publications: [{ ...paper, url: 'javascript:alert(1)' }] }));
+		expect(unsafe).not.toContain('javascript');
+		expect(unsafe).not.toContain('#link(');
+	});
+
+	it('escapes markup in publication fields', () => {
+		const content = contentOf(withOverrides({ publications: [{ ...paper, venue: 'Conf] #eval("1")' }] }));
+		expect(content).toContain(String.raw`_Conf\] \#eval(\"1\")_`);
+	});
+});
+
 describe('custom Typst templates', () => {
 	it('uses the uploaded preamble and generated resume content', () => {
 		const customTemplate = `#let custom-style = true\n${RESUME_CONTENT_MARKER}\nThis is replaced`;

@@ -9,6 +9,16 @@ describe('mergeWithDefaults', () => {
 		expect(merged.clearance).toEqual([]);
 	});
 
+	it('adds publications to data saved before the section existed', () => {
+		const { publications, ...withoutPublications } = defaultResumeData;
+		const merged = mergeWithDefaults({
+			...withoutPublications,
+			sectionOrder: withoutPublications.sectionOrder.filter((id) => id !== 'publications'),
+		});
+		expect(merged.publications).toEqual([]);
+		expect(merged.sectionOrder.at(-1)).toBe('publications');
+	});
+
 	it('preserves fields present in the saved data', () => {
 		const saved = { ...defaultResumeData, personalInfo: { ...defaultResumeData.personalInfo, name: 'Ada' } };
 		const merged = mergeWithDefaults(saved);

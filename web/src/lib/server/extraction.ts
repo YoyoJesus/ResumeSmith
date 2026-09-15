@@ -83,6 +83,7 @@ export const RESUME_SCHEMA = {
 		'leadership',
 		'skills',
 		'achievements',
+		'publications',
 		'clearance',
 	],
 	properties: {
@@ -198,6 +199,21 @@ export const RESUME_SCHEMA = {
 				},
 			},
 		},
+		publications: {
+			type: 'array',
+			items: {
+				type: 'object',
+				additionalProperties: false,
+				required: ['title', 'authors', 'venue', 'date', 'url'],
+				properties: {
+					title: { type: 'string' },
+					authors: { type: 'string' },
+					venue: { type: 'string' },
+					date: { type: 'string' },
+					url: { type: 'string' },
+				},
+			},
+		},
 		clearance: {
 			type: 'array',
 			items: {
@@ -259,6 +275,7 @@ export function validateExtractedResume(value: unknown): ExtractedResume | null 
 		!hasEntries(value.leadership, ['title', 'organization', 'location', 'startDate', 'endDate'], ['isPresent'], true) ||
 		!hasEntries(value.skills, ['category', 'skills']) ||
 		!hasEntries(value.achievements, ['title', 'date', 'description']) ||
+		!hasEntries(value.publications, ['title', 'authors', 'venue', 'date', 'url']) ||
 		!hasEntries(value.clearance, ['level', 'status', 'dateGranted'])
 	) {
 		return null;

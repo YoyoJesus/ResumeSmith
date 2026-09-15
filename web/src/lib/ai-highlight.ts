@@ -36,6 +36,7 @@ const ARRAY_SECTIONS = [
 	'leadership',
 	'skills',
 	'achievements',
+	'publications',
 	'clearance',
 ] as const;
 

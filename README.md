@@ -6,7 +6,7 @@ ResumeSmith is a privacy-conscious resume builder for forging polished, job-read
 
 ## Features
 
-- Edit resume content in the browser and preview the rendered document as you work.
+- Edit resume content in the browser and preview the rendered document as you work, including sections for experience, projects, clearance, achievements, and publications.
 - Export a polished PDF using the bundled Typst WebAssembly compiler.
 - Import TXT, DOCX, or PDF resumes through a review-and-consent gate before AI parsing.
 - Extract selectable PDF text locally and use Tesseract OCR only on pages that need it.

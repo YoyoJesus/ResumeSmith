@@ -26,6 +26,7 @@
 	import LeadershipForm from '$lib/components/forms/LeadershipForm.svelte';
 	import SkillsForm from '$lib/components/forms/SkillsForm.svelte';
 	import AchievementsForm from '$lib/components/forms/AchievementsForm.svelte';
+	import PublicationsForm from '$lib/components/forms/PublicationsForm.svelte';
 	import LayoutForm from '$lib/components/forms/LayoutForm.svelte';
 	import FontsForm from '$lib/components/forms/FontsForm.svelte';
 	import ColorsForm from '$lib/components/forms/ColorsForm.svelte';
@@ -107,6 +108,7 @@
 		{ id: 'leadership', label: 'Leadership' },
 		{ id: 'skills', label: 'Skills' },
 		{ id: 'achievements', label: 'Achievements' },
+		{ id: 'publications', label: 'Publications' },
 		{ id: 'layout', label: 'Layout' },
 		{ id: 'fonts', label: 'Fonts' },
 		{ id: 'colors', label: 'Colors' },
@@ -172,6 +174,8 @@
 					<SkillsForm {data} />
 				{:else if activeTab === 'achievements'}
 					<AchievementsForm {data} />
+				{:else if activeTab === 'publications'}
+					<PublicationsForm {data} />
 				{:else if activeTab === 'layout'}
 					<LayoutForm {data} />
 				{:else if activeTab === 'fonts'}

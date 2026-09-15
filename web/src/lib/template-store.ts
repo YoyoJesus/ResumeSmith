@@ -82,6 +82,16 @@ const TEMPLATE_CONTRACT_FIXTURE: ResumeData = {
 	],
 	skills: [{ id: 'skills', category: 'Tools', skills: 'Typst' }],
 	achievements: [{ id: 'achievement', title: 'Example Achievement', date: '2024-01', description: 'Detail.' }],
+	publications: [
+		{
+			id: 'publication',
+			title: 'Example Paper',
+			authors: 'T. Test',
+			venue: 'Example Journal',
+			date: '2024-01',
+			url: 'example.com/paper',
+		},
+	],
 };
 
 /** Checks the inexpensive size, marker, and declaration requirements before compiling a template. */
