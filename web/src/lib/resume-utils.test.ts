@@ -12,6 +12,7 @@ const sample: ExtractedResume = {
 	leadership: [],
 	skills: [],
 	achievements: [],
+	publications: [{ title: 'Paper', authors: 'A. Test', venue: 'Journal', date: '2021-04', url: '' }],
 	clearance: [{ level: 'Secret', status: 'Active', dateGranted: '2022-06' }],
 };
 

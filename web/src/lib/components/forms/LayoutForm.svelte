@@ -22,7 +22,7 @@
 		<h2 class="text-lg font-semibold">Section Order</h2>
 		<button class="secondary text-sm" onclick={resetSectionOrder}>Reset to Default</button>
 	</div>
-	<p class="text-sm text-gray-600">Use the arrows to reorder how sections appear in your resume.</p>
+	<p class="text-sm text-gray-600">Use the arrows to reorder sections.</p>
 	<div class="space-y-2">
 		{#each data.sectionOrder as sectionId, i}
 			<div class="flex items-center gap-3 bg-gray-50 border rounded-lg p-3">

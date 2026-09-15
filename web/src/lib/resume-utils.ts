@@ -29,6 +29,7 @@ export function estimateOverOnePage(data: ResumeData): boolean {
 	lines += data.skills.length * 1;
 	lines += data.achievements.length * 2;
 	lines += data.clearance.length * 2;
+	lines += data.publications.length * 2;
 	return lines > 55; // Rough estimate for one page
 }
 
@@ -45,9 +46,11 @@ export function buildResumeFromExtraction(ex: ExtractedResume): ResumeData {
 		leadership: withId(ex.leadership ?? []),
 		skills: withId(ex.skills ?? []),
 		achievements: withId(ex.achievements ?? []),
+		publications: withId(ex.publications ?? []),
 		clearance: withId(ex.clearance ?? []),
 		colors: { ...defaultResumeData.colors },
 		fonts: { ...defaultFontSettings },
+		fontFamilies: { ...defaultResumeData.fontFamilies },
 		sectionOrder: [...defaultSectionOrder],
 	};
 }

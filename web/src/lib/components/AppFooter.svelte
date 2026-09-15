@@ -50,17 +50,28 @@
 			</p>
 		</div>
 
-		<p class="shrink-0">
-			{new Date().getFullYear()} ResumeSmith -
-			<a href="https://asternberg.xyz" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700"
-				>Austin Sternberg</a
-			>
-			&middot;
-			<a href="https://typst.app" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">Typst</a>
-			Layout by
-			<a href="https://monster0506.dev/" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700"
-				>TJ Raklovits</a
-			>
-		</p>
+		<div class="shrink-0 space-y-1">
+			<p>
+				{new Date().getFullYear()} ResumeSmith -
+				<a href="https://asternberg.xyz" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700"
+					>Austin Sternberg</a
+				>
+				&middot;
+				<a href="https://typst.app" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700">Typst</a>
+				Layout by
+				<a href="https://monster0506.dev/" target="_blank" rel="noopener noreferrer" class="hover:text-gray-700"
+					>TJ Raklovits</a
+				>
+			</p>
+			<p>
+				Missing something?
+				<a
+					href="https://github.com/YoyoJesus/ResumeSmith"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="font-medium text-blue-600 underline hover:text-blue-800">Contribute on GitHub</a
+				>
+			</p>
+		</div>
 	</div>
 </footer>

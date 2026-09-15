@@ -65,6 +65,7 @@ describe('extraction output safety', () => {
 		leadership: [],
 		skills: [],
 		achievements: [],
+		publications: [],
 		clearance: [],
 	};
 

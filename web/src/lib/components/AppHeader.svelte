@@ -29,13 +29,14 @@
 		<div class="flex items-center justify-between flex-wrap gap-2">
 			<h1 class="text-2xl font-bold text-gray-900">ResumeSmith</h1>
 			<div class="flex gap-2">
-				<button class="secondary" onclick={onUpload}>Upload your Resume</button>
-				<button class="secondary" onclick={onTemplate}>
-					{hasCustomTemplate ? 'Template (Custom)' : 'Upload Template'}
+				<button class="secondary" onclick={onUpload} title="Fill the form from an existing resume">Import resume</button
+				>
+				<button class="secondary" onclick={onTemplate} title="Change the resume layout">
+					{hasCustomTemplate ? 'Template: custom' : 'Template'}
 				</button>
-				<button class="secondary" onclick={onTailor}>Tailor to a Job</button>
+				<button class="secondary" onclick={onTailor} title="Match your resume to a job">Tailor to job</button>
 				<button class="secondary" onclick={() => (showCode = !showCode)}>
-					{showCode ? 'Preview' : 'Typst'}
+					{showCode ? 'Show preview' : 'Show code'}
 				</button>
 				<button class="primary" onclick={onDownload} disabled={isCompiling}>
 					{isCompiling ? 'Generating...' : 'Download PDF'}
@@ -47,11 +48,11 @@
 		{/if}
 		{#if compiledPageCount !== null && compiledPageCount > 1}
 			<div class="mt-2 px-3 py-2 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded text-sm">
-				Your resume is {compiledPageCount} pages. Consider removing some content if you are targeting a one-page resume.
+				Your resume is {compiledPageCount} pages.
 			</div>
 		{:else if compiledPageCount === null && estimatedOverOnePage}
 			<div class="mt-2 px-3 py-2 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded text-sm">
-				Your resume may exceed one page. The preview is still calculating the exact page count.
+				Your resume may be over one page.
 			</div>
 		{/if}
 	</div>

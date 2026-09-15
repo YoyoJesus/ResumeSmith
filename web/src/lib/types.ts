@@ -62,6 +62,15 @@ export interface Achievement {
 	description: string;
 }
 
+export interface Publication {
+	id: string;
+	title: string;
+	authors: string;
+	venue: string;
+	date: string;
+	url: string;
+}
+
 export type ClearanceLevel = 'Confidential' | 'Secret' | 'Top Secret' | 'Top Secret/SCI' | 'Public Trust';
 export type ClearanceStatus = 'Active' | 'Inactive' | 'Eligible';
 
@@ -99,6 +108,16 @@ export const defaultFontSettings: FontSettings = {
 	contactSize: 11.2,
 };
 
+export interface FontFamilies {
+	heading: string;
+	body: string;
+}
+
+export const defaultFontFamilies: FontFamilies = {
+	heading: 'Libertinus Serif',
+	body: 'Libertinus Serif',
+};
+
 export type SectionId =
 	| 'profile'
 	| 'clearance'
@@ -107,7 +126,8 @@ export type SectionId =
 	| 'experience'
 	| 'leadership'
 	| 'skills'
-	| 'achievements';
+	| 'achievements'
+	| 'publications';
 
 export const defaultSectionOrder: SectionId[] = [
 	'profile',
@@ -118,6 +138,7 @@ export const defaultSectionOrder: SectionId[] = [
 	'leadership',
 	'skills',
 	'achievements',
+	'publications',
 ];
 
 export const sectionLabels: Record<SectionId, string> = {
@@ -129,6 +150,7 @@ export const sectionLabels: Record<SectionId, string> = {
 	leadership: 'Leadership',
 	skills: 'Skills',
 	achievements: 'Achievements',
+	publications: 'Publications',
 };
 
 export interface ResumeData {
@@ -141,8 +163,10 @@ export interface ResumeData {
 	leadership: Leadership[];
 	skills: SkillCategory[];
 	achievements: Achievement[];
+	publications: Publication[];
 	colors: ColorSettings;
 	fonts: FontSettings;
+	fontFamilies: FontFamilies;
 	sectionOrder: SectionId[];
 }
 
@@ -166,6 +190,7 @@ export const defaultResumeData: ResumeData = {
 	leadership: [],
 	skills: [],
 	achievements: [],
+	publications: [],
 	colors: {
 		headColor: '#22227f',
 		textColor: '#1b1b1b',
@@ -173,6 +198,7 @@ export const defaultResumeData: ResumeData = {
 		linkColor: '#1d4ed8',
 	},
 	fonts: { ...defaultFontSettings },
+	fontFamilies: { ...defaultFontFamilies },
 	sectionOrder: [...defaultSectionOrder],
 };
 
@@ -186,5 +212,6 @@ export interface ExtractedResume {
 	leadership: Omit<Leadership, 'id'>[];
 	skills: Omit<SkillCategory, 'id'>[];
 	achievements: Omit<Achievement, 'id'>[];
+	publications: Omit<Publication, 'id'>[];
 	clearance: Omit<Clearance, 'id'>[];
 }

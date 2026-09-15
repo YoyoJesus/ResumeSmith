@@ -31,7 +31,7 @@
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
 		<h2 class="text-lg font-semibold">Leadership</h2>
-		<button class="primary text-sm" onclick={addLeadership}>+ Add</button>
+		<button class="primary text-sm" onclick={addLeadership}>+ Add role</button>
 	</div>
 	{#each data.leadership as lead, i}
 		<EntryCard index={i} onRemove={() => removeLeadership(lead.id)}>

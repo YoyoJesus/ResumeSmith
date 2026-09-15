@@ -14,8 +14,14 @@
 		isPreviewLoading: boolean;
 	} = $props();
 
-	function copyToClipboard() {
-		navigator.clipboard.writeText(typstCode);
+	let copied = $state(false);
+	let copiedTimer: ReturnType<typeof setTimeout> | undefined;
+
+	async function copyToClipboard() {
+		await navigator.clipboard.writeText(typstCode);
+		copied = true;
+		clearTimeout(copiedTimer);
+		copiedTimer = setTimeout(() => (copied = false), 1500);
 	}
 </script>
 
@@ -30,7 +36,9 @@
 
 	{#if showCode}
 		<div class="relative min-h-0 w-full flex-1">
-			<button class="absolute top-2 right-2 secondary text-xs" onclick={copyToClipboard}>Copy</button>
+			<button class="absolute top-2 right-2 secondary text-xs" onclick={copyToClipboard}
+				>{copied ? 'Copied' : 'Copy'}</button
+			>
 			<pre class="h-full w-full overflow-auto rounded-lg bg-gray-900 p-4 text-xs text-gray-100"><code>{typstCode}</code
 				></pre>
 		</div>

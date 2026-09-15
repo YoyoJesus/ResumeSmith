@@ -19,7 +19,7 @@
 <div>
 	<div class="flex items-center justify-between mb-2">
 		<label class="mb-0">{label}</label>
-		<button class="secondary text-xs px-2 py-1" onclick={addBullet}>+ Add</button>
+		<button class="secondary text-xs px-2 py-1" onclick={addBullet}>+ Add bullet</button>
 	</div>
 	{#each bullets as _, bi}
 		<div class="flex gap-2 mb-2">
@@ -31,7 +31,12 @@
 				class:ai-filled={aiFilled.has(`${path}.${bi}`)}
 				oninput={() => clearHighlight(`${path}.${bi}`)}
 			/>
-			{#if bullets.length > 1}<button class="danger text-xs px-2" onclick={() => removeBullet(bi)}>X</button>{/if}
+			{#if bullets.length > 1}<button
+					class="danger text-xs px-2"
+					onclick={() => removeBullet(bi)}
+					aria-label="Remove bullet"
+					title="Remove bullet">Remove</button
+				>{/if}
 		</div>
 	{/each}
 </div>

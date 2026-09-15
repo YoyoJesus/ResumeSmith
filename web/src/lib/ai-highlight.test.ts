@@ -30,6 +30,7 @@ const sample: ExtractedResume = {
 	leadership: [],
 	skills: [{ category: 'Lang', skills: 'TS' }],
 	achievements: [],
+	publications: [],
 	clearance: [{ level: 'Secret', status: 'Active', dateGranted: '2022-06' }],
 };
 

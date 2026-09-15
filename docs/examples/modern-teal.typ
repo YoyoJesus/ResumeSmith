@@ -1,5 +1,5 @@
 // Example custom template for ResumeSmith.
-// Upload this file with the "Upload Template" button.
+// Upload this file with the "Template" button.
 
 #let ink = rgb("183153")
 #let muted = rgb("52606d")

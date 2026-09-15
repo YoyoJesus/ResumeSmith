@@ -1,9 +1,7 @@
-import { $typst } from '@myriaddreamin/typst.ts';
+import { loadFonts } from '@myriaddreamin/typst.ts';
+import { TypstSnippet } from '@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs';
 import { downloadBlob } from './browser-download';
-
-let initPromise: Promise<void> | null = null;
-let initError: Error | null = null;
-let initialized = false;
+import { fontFilesFor } from './fonts';
 
 export interface PreviewPage {
 	pageOffset: number;
@@ -16,38 +14,52 @@ export interface CompiledPreview {
 	pages: PreviewPage[];
 }
 
-export async function initCompiler(): Promise<void> {
-	if (initialized) return;
-	if (initError) throw initError;
-	if (initPromise) return initPromise;
+// Typst fonts are fixed when a compiler is built, so each font set gets its own compiler. Only the
+// web fonts a resume actually selects are downloaded; built-in fonts load with every compiler.
+const compilers = new Map<string, Promise<TypstSnippet>>();
+let documentFontFiles: string[] = [];
 
-	initPromise = (async () => {
-		try {
-			// Configure the compiler to load WASM from static folder
-			$typst.setCompilerInitOptions({
-				getModule: () => fetch('/typst_ts_web_compiler_bg.wasm').then((r) => r.arrayBuffer()),
-			});
-			$typst.setRendererInitOptions({
-				getModule: () => fetch('/typst_ts_renderer_bg.wasm').then((r) => r.arrayBuffer()),
-			});
-			// Initialize by doing a simple compile - this will load fonts from CDN
-			await $typst.pdf({ mainContent: '' });
-			initialized = true;
-		} catch (err) {
-			initError = err instanceof Error ? err : new Error(String(err));
-			initPromise = null;
-			throw initError;
-		}
+function compilerFor(files: string[]): Promise<TypstSnippet> {
+	const key = files.join('\n');
+	const existing = compilers.get(key);
+	if (existing) return existing;
+
+	// Keep the default compiler warm, but drop compilers for fonts the resume no longer uses.
+	for (const other of compilers.keys()) {
+		if (other !== '') compilers.delete(other);
+	}
+
+	const compiler = (async () => {
+		const snippet = new TypstSnippet();
+		snippet.setCompilerInitOptions({
+			getModule: () => fetch('/typst_ts_web_compiler_bg.wasm').then((r) => r.arrayBuffer()),
+			beforeBuild: files.length > 0 ? [loadFonts(files)] : [],
+		});
+		snippet.setRendererInitOptions({
+			getModule: () => fetch('/typst_ts_renderer_bg.wasm').then((r) => r.arrayBuffer()),
+		});
+		await snippet.pdf({ mainContent: '' });
+		return snippet;
 	})();
+	compilers.set(key, compiler);
+	compiler.catch(() => compilers.delete(key));
+	return compiler;
+}
 
-	return initPromise;
+/** Sets the font families the next compilations must be able to render. */
+export function setDocumentFonts(families: string[]): void {
+	documentFontFiles = fontFilesFor(families);
+}
+
+export async function initCompiler(): Promise<void> {
+	await compilerFor([]);
 }
 
 export async function compileToPdf(typstCode: string): Promise<Uint8Array> {
-	await initCompiler();
+	const typst = await compilerFor(documentFontFiles);
 
 	try {
-		const pdfData = await $typst.pdf({ mainContent: typstCode });
+		const pdfData = await typst.pdf({ mainContent: typstCode });
 		if (!pdfData) throw new Error('PDF compilation returned no data');
 		return pdfData;
 	} catch (err) {
@@ -57,13 +69,13 @@ export async function compileToPdf(typstCode: string): Promise<Uint8Array> {
 }
 
 export async function compileToPreview(typstCode: string): Promise<CompiledPreview> {
-	await initCompiler();
+	const typst = await compilerFor(documentFontFiles);
 
 	try {
-		const vectorData = await $typst.vector({ mainContent: typstCode });
+		const vectorData = await typst.vector({ mainContent: typstCode });
 		if (!vectorData) throw new Error('Preview compilation returned no data');
 
-		const renderer = await $typst.getRenderer();
+		const renderer = await typst.getRenderer();
 		return renderer.runWithSession({ format: 'vector', artifactContent: vectorData }, async (session) => ({
 			svg: await session.renderSvg({}),
 			pages: session.retrievePagesInfo(),

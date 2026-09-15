@@ -5,12 +5,14 @@ import type {
 	Education,
 	Leadership,
 	Achievement,
+	Publication,
 	SkillCategory,
 	Clearance,
 	SectionId,
 } from './types';
 import { defaultFontSettings, defaultResumeData } from './types';
 import { typstString, typstMarkup, typstNumber, typstColor, typstUrl } from './typst-escape';
+import { FONT_SIZE_BOUNDS, fontFamily } from './fonts';
 
 export const RESUME_CONTENT_MARKER = '// ========== RESUME CONTENT ==========';
 
@@ -43,16 +45,8 @@ function formatDisplayDate(dateStr: string): string {
 	return `${MONTHS[parsed.month - 1]} ${parsed.year}`;
 }
 
-// Font sizes go into code position; the bounds mirror the sliders in FontsForm.
-const FONT_BOUNDS: Record<keyof typeof defaultFontSettings, [number, number]> = {
-	baseSize: [6, 14],
-	nameSize: [14, 32],
-	headingSize: [10, 24],
-	contactSize: [7, 16],
-};
-
 function fontSize(fonts: ResumeData['fonts'], key: keyof typeof defaultFontSettings): number {
-	const [min, max] = FONT_BOUNDS[key];
+	const [min, max] = FONT_SIZE_BOUNDS[key];
 	return typstNumber(fonts[key], defaultFontSettings[key], min, max);
 }
 
@@ -167,6 +161,28 @@ function generateAchievements(achievements: Achievement[]): string {
 ${achievementItems}`;
 }
 
+// Reuses achievement-heading so existing custom templates keep compiling without a new helper.
+function generatePublications(publications: Publication[]): string {
+	const items = publications
+		.filter((p) => p.title.trim())
+		.map((p) => {
+			const details = [
+				p.authors.trim() ? typstMarkup(p.authors) : '',
+				p.venue.trim() ? `_${typstMarkup(p.venue)}_` : '',
+			].filter(Boolean);
+			const url = typstUrl(p.url);
+			if (url) details.push(`#link("${typstString(url)}")`);
+			const body = details.length ? `\n${details.join('. ')}` : '';
+			return `#achievement-heading("${typstString(p.title)}", "${typstString(formatDisplayDate(p.date))}")[${body}]`;
+		})
+		.join('\n\n');
+
+	if (!items) return '';
+
+	return `= Publications
+${items}`;
+}
+
 function generateClearance(clearance: Clearance[]): string {
 	if (clearance.length === 0) return '';
 
@@ -196,8 +212,10 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
 		leadership,
 		skills,
 		achievements,
+		publications,
 		colors,
 		fonts,
+		fontFamilies,
 		sectionOrder,
 	} = data;
 
@@ -217,6 +235,7 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
 			filledLeadership.length > 0 ? `= Leadership\n${filledLeadership.map(generateLeadership).join('\n\n')}` : '',
 		skills: generateSkills(skills),
 		achievements: generateAchievements(achievements),
+		publications: generatePublications(publications),
 	};
 
 	// Generate sections in the specified order
@@ -235,6 +254,8 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
 #let personal-info-font-size = ${fontSize(fonts, 'contactSize')}pt
 #let heading-size = ${fontSize(fonts, 'headingSize')}pt
 #let title-size = ${fontSize(fonts, 'nameSize')}pt
+#let heading-font = "${typstString(fontFamily(fontFamilies?.heading))}"
+#let body-font = "${typstString(fontFamily(fontFamilies?.body))}"
 
 #let bold(body) = {
   text(weight: 700)[#body]
@@ -280,11 +301,11 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
   )
 
   set text(
-    size: font-size, lang: "en", ligatures: false, fill: text-color
+    font: body-font, size: font-size, lang: "en", ligatures: false, fill: text-color
   )
 
   show heading.where(level: 1): it => block(width: 100%)[
-    #set text(heading-size, weight: "regular", fill: acct-color)
+    #set text(heading-size, font: heading-font, weight: "regular", fill: acct-color)
     #smallcaps(it.body)
     #v(-1.0em)
     #line(length: 100%, stroke: stroke(thickness: 0.4pt, paint: acct-color))
@@ -314,7 +335,7 @@ export function generateTypstCode(data: ResumeData, customTemplate?: string | nu
           column-gutter: 20pt,
           align: center,
 
-          upper(text(title-size, weight: "bold", fill: head-color)[#author-name]),
+          upper(text(title-size, font: heading-font, weight: "bold", fill: head-color)[#author-name]),
         )[
           #v(-0.2em)
         ]

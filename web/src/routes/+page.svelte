@@ -3,7 +3,14 @@
 	import { resumeStore } from '$lib/store';
 	import { onetStore } from '$lib/onet-store';
 	import { generateTypstCode } from '$lib/typst-generator';
-	import { initCompiler, compileToPdf, compileToPreview, downloadPdf, type CompiledPreview } from '$lib/pdf-compiler';
+	import {
+		initCompiler,
+		compileToPdf,
+		compileToPreview,
+		downloadPdf,
+		setDocumentFonts,
+		type CompiledPreview,
+	} from '$lib/pdf-compiler';
 	import type { ResumeData } from '$lib/types';
 	import { defaultResumeData } from '$lib/types';
 	import { estimateOverOnePage } from '$lib/resume-utils';
@@ -26,6 +33,7 @@
 	import LeadershipForm from '$lib/components/forms/LeadershipForm.svelte';
 	import SkillsForm from '$lib/components/forms/SkillsForm.svelte';
 	import AchievementsForm from '$lib/components/forms/AchievementsForm.svelte';
+	import PublicationsForm from '$lib/components/forms/PublicationsForm.svelte';
 	import LayoutForm from '$lib/components/forms/LayoutForm.svelte';
 	import FontsForm from '$lib/components/forms/FontsForm.svelte';
 	import ColorsForm from '$lib/components/forms/ColorsForm.svelte';
@@ -57,6 +65,8 @@
 	});
 
 	$effect(() => {
+		// Custom templates set their own fonts, so only the built-in template needs web fonts.
+		setDocumentFonts(customTemplate ? [] : [data.fontFamilies.heading, data.fontFamilies.body]);
 		previewScheduler.schedule(typstCode);
 	});
 
@@ -107,6 +117,7 @@
 		{ id: 'leadership', label: 'Leadership' },
 		{ id: 'skills', label: 'Skills' },
 		{ id: 'achievements', label: 'Achievements' },
+		{ id: 'publications', label: 'Publications' },
 		{ id: 'layout', label: 'Layout' },
 		{ id: 'fonts', label: 'Fonts' },
 		{ id: 'colors', label: 'Colors' },
@@ -148,15 +159,8 @@
 					<div
 						class="mb-4 flex items-start justify-between gap-2 rounded border border-purple-300 bg-purple-50 px-3 py-2 text-sm text-purple-800"
 					>
-						<span
-							>The highlighted (purple) fields were filled in for you, by AI extraction or from O*NET - please review
-							them for accuracy.</span
-						>
-						<button
-							class="secondary text-xs px-2 py-0.5"
-							onclick={() => (showReviewBanner = false)}
-							aria-label="Dismiss">X</button
-						>
+						<span>Purple fields were filled in automatically. Check them before exporting.</span>
+						<button class="secondary text-xs px-2 py-0.5" onclick={() => (showReviewBanner = false)}>Dismiss</button>
 					</div>
 				{/if}
 				<TabBar {tabs} bind:activeTab />
@@ -179,6 +183,8 @@
 					<SkillsForm {data} />
 				{:else if activeTab === 'achievements'}
 					<AchievementsForm {data} />
+				{:else if activeTab === 'publications'}
+					<PublicationsForm {data} />
 				{:else if activeTab === 'layout'}
 					<LayoutForm {data} />
 				{:else if activeTab === 'fonts'}

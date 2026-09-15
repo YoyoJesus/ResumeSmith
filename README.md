@@ -6,8 +6,9 @@ ResumeSmith is a privacy-conscious resume builder for forging polished, job-read
 
 ## Features
 
-- Edit resume content in the browser and preview the rendered document as you work.
+- Edit resume content in the browser and preview the rendered document as you work, including sections for experience, projects, clearance, achievements, and publications.
 - Export a polished PDF using the bundled Typst WebAssembly compiler.
+- Pick separate heading and body fonts, and adjust font sizes with sliders or 0.5 pt steps.
 - Import TXT, DOCX, or PDF resumes through a review-and-consent gate before AI parsing.
 - Extract selectable PDF text locally and use Tesseract OCR only on pages that need it.
 - Search O\*NET occupations and use AI-assisted suggestions to tailor resume content.
@@ -26,6 +27,8 @@ Current resume-upload limits are:
 - 120,000 extracted characters
 
 Resume data and the selected O\*NET occupation are stored in browser `localStorage`. Custom templates are stored in `sessionStorage`, take precedence over the built-in template, and are removed when that browser session ends or the user resets the template.
+
+The Typst compiler downloads its built-in fonts from jsDelivr. Web fonts (Carlito, Lato, Open Sans, Roboto) are downloaded from the Fontsource CDN on jsDelivr only when selected in the Fonts tab.
 
 AI-backed routes use stateless Vercel functions and request `store: false` from OpenAI. This project has no database or persistent server-side file storage.
 
