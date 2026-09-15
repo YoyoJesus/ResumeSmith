@@ -50,6 +50,7 @@ export function buildResumeFromExtraction(ex: ExtractedResume): ResumeData {
 		clearance: withId(ex.clearance ?? []),
 		colors: { ...defaultResumeData.colors },
 		fonts: { ...defaultFontSettings },
+		fontFamilies: { ...defaultResumeData.fontFamilies },
 		sectionOrder: [...defaultSectionOrder],
 	};
 }

@@ -76,6 +76,26 @@ describe('generateTypstCode publications section', () => {
 	});
 });
 
+describe('generateTypstCode font families', () => {
+	it('applies the chosen heading and body fonts', () => {
+		const code = generateTypstCode(withOverrides({ fontFamilies: { heading: 'Lato', body: 'Carlito' } }));
+		expect(code).toContain('#let heading-font = "Lato"');
+		expect(code).toContain('#let body-font = "Carlito"');
+		expect(code).toContain('font: body-font, size: font-size');
+		expect(code).toContain('#set text(heading-size, font: heading-font');
+		expect(code).toContain('text(title-size, font: heading-font');
+	});
+
+	it('falls back to the default font for a value outside the curated list', () => {
+		const code = generateTypstCode(
+			withOverrides({ fontFamilies: { heading: 'Lato"); #eval("1+1', body: 'Wingdings' } }),
+		);
+		expect(code).not.toContain('eval');
+		expect(code).toContain('#let heading-font = "Libertinus Serif"');
+		expect(code).toContain('#let body-font = "Libertinus Serif"');
+	});
+});
+
 describe('custom Typst templates', () => {
 	it('uses the uploaded preamble and generated resume content', () => {
 		const customTemplate = `#let custom-style = true\n${RESUME_CONTENT_MARKER}\nThis is replaced`;

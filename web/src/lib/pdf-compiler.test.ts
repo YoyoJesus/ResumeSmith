@@ -12,23 +12,34 @@ const mocks = vi.hoisted(() => {
 		pdf: vi.fn().mockResolvedValue(new Uint8Array([1])),
 		vector: vi.fn().mockResolvedValue(new Uint8Array([2])),
 		runWithSession: vi.fn(async (_options, work) => work(session)),
+		setCompilerInitOptions: vi.fn(),
+		loadFonts: vi.fn((files: string[]) => ({ files })),
+		instances: 0,
 		session,
 	};
 });
 
-vi.mock('@myriaddreamin/typst.ts', () => ({
-	$typst: {
-		setCompilerInitOptions: vi.fn(),
-		setRendererInitOptions: vi.fn(),
-		pdf: mocks.pdf,
-		vector: mocks.vector,
-		getRenderer: vi.fn().mockResolvedValue({ runWithSession: mocks.runWithSession }),
+vi.mock('@myriaddreamin/typst.ts', () => ({ loadFonts: mocks.loadFonts }));
+
+vi.mock('@myriaddreamin/typst.ts/dist/esm/contrib/snippet.mjs', () => ({
+	TypstSnippet: class {
+		constructor() {
+			mocks.instances++;
+		}
+		setCompilerInitOptions = mocks.setCompilerInitOptions;
+		setRendererInitOptions = vi.fn();
+		pdf = mocks.pdf;
+		vector = mocks.vector;
+		getRenderer = vi.fn().mockResolvedValue({ runWithSession: mocks.runWithSession });
 	},
 }));
 
-import { compileToPreview } from './pdf-compiler';
+import { compileToPdf, compileToPreview, setDocumentFonts } from './pdf-compiler';
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => {
+	vi.clearAllMocks();
+	setDocumentFonts([]);
+});
 
 it('returns each page reported by the renderer with the compiled SVG', async () => {
 	const preview = await compileToPreview('#pagebreak()');
@@ -45,4 +56,24 @@ it('returns each page reported by the renderer with the compiled SVG', async () 
 		{ format: 'vector', artifactContent: new Uint8Array([2]) },
 		expect.any(Function),
 	);
+});
+
+it('builds the default compiler without downloading web fonts', async () => {
+	setDocumentFonts(['Libertinus Serif', 'New Computer Modern']);
+	await compileToPdf('Hi');
+	expect(mocks.loadFonts).not.toHaveBeenCalled();
+});
+
+it('builds one compiler for a web font selection and reuses it', async () => {
+	const before = mocks.instances;
+	setDocumentFonts(['Lato', 'Libertinus Serif']);
+	await compileToPdf('Hi');
+	await compileToPreview('Hi');
+
+	expect(mocks.instances).toBe(before + 1);
+	expect(mocks.loadFonts).toHaveBeenCalledTimes(1);
+	const [files] = mocks.loadFonts.mock.calls[0];
+	expect(files).toHaveLength(4);
+	expect(files.every((file: string) => file.includes('/lato@'))).toBe(true);
+	expect(mocks.setCompilerInitOptions).toHaveBeenCalledWith(expect.objectContaining({ beforeBuild: [{ files }] }));
 });

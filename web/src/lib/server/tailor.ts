@@ -82,6 +82,7 @@ export function isValidTailorResume(value: unknown): value is ResumeData {
 		entries(value.publications, ['id', 'title', 'authors', 'venue', 'date', 'url']) &&
 		objectFields(value.colors, ['headColor', 'textColor', 'accentColor', 'linkColor']) &&
 		numericFields(value.fonts, ['baseSize', 'nameSize', 'headingSize', 'contactSize']) &&
+		objectFields(value.fontFamilies, ['heading', 'body']) &&
 		Array.isArray(value.sectionOrder) &&
 		value.sectionOrder.length <= MAX_ITEMS &&
 		value.sectionOrder.every(boundedString)

@@ -9,6 +9,12 @@ describe('mergeWithDefaults', () => {
 		expect(merged.clearance).toEqual([]);
 	});
 
+	it('adds default font families to data saved before they existed', () => {
+		const { fontFamilies, ...withoutFontFamilies } = defaultResumeData;
+		const merged = mergeWithDefaults(withoutFontFamilies);
+		expect(merged.fontFamilies).toEqual({ heading: 'Libertinus Serif', body: 'Libertinus Serif' });
+	});
+
 	it('adds publications to data saved before the section existed', () => {
 		const { publications, ...withoutPublications } = defaultResumeData;
 		const merged = mergeWithDefaults({

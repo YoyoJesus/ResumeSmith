@@ -108,6 +108,16 @@ export const defaultFontSettings: FontSettings = {
 	contactSize: 11.2,
 };
 
+export interface FontFamilies {
+	heading: string;
+	body: string;
+}
+
+export const defaultFontFamilies: FontFamilies = {
+	heading: 'Libertinus Serif',
+	body: 'Libertinus Serif',
+};
+
 export type SectionId =
 	| 'profile'
 	| 'clearance'
@@ -156,6 +166,7 @@ export interface ResumeData {
 	publications: Publication[];
 	colors: ColorSettings;
 	fonts: FontSettings;
+	fontFamilies: FontFamilies;
 	sectionOrder: SectionId[];
 }
 
@@ -187,6 +198,7 @@ export const defaultResumeData: ResumeData = {
 		linkColor: '#1d4ed8',
 	},
 	fonts: { ...defaultFontSettings },
+	fontFamilies: { ...defaultFontFamilies },
 	sectionOrder: [...defaultSectionOrder],
 };
 

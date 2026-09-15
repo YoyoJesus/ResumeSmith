@@ -3,7 +3,14 @@
 	import { resumeStore } from '$lib/store';
 	import { onetStore } from '$lib/onet-store';
 	import { generateTypstCode } from '$lib/typst-generator';
-	import { initCompiler, compileToPdf, compileToPreview, downloadPdf, type CompiledPreview } from '$lib/pdf-compiler';
+	import {
+		initCompiler,
+		compileToPdf,
+		compileToPreview,
+		downloadPdf,
+		setDocumentFonts,
+		type CompiledPreview,
+	} from '$lib/pdf-compiler';
 	import type { ResumeData } from '$lib/types';
 	import { defaultResumeData } from '$lib/types';
 	import { estimateOverOnePage } from '$lib/resume-utils';
@@ -58,6 +65,8 @@
 	});
 
 	$effect(() => {
+		// Custom templates set their own fonts, so only the built-in template needs web fonts.
+		setDocumentFonts(customTemplate ? [] : [data.fontFamilies.heading, data.fontFamilies.body]);
 		previewScheduler.schedule(typstCode);
 	});
 

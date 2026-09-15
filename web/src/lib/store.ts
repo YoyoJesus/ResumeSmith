@@ -23,6 +23,7 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		profile: { ...defaults.profile, ...saved.profile },
 		colors: { ...defaults.colors, ...saved.colors },
 		fonts: { ...defaults.fonts, ...saved.fonts },
+		fontFamilies: { ...defaults.fontFamilies, ...saved.fontFamilies },
 		clearance: arrays('clearance'),
 		education: arrays('education'),
 		projects: arrays('projects'),
