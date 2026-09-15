@@ -20,6 +20,11 @@
 	let isBusy = $derived(status === 'analyzing' || status === 'processing');
 
 	const ACCEPT = '.pdf,.docx,.txt';
+	const METHOD_LABELS: Record<PreflightResult['metrics']['method'], string> = {
+		text: 'read as text',
+		ocr: 'scanned with OCR',
+		hybrid: 'text and OCR',
+	};
 
 	$effect(() => {
 		if (!open) return;
@@ -196,61 +201,46 @@
 			{:else if status === 'review' && result}
 				<div class="space-y-3">
 					<div
-						class="rounded-md border p-3 {result.metrics.status === 'pass'
-							? 'border-green-200 bg-green-50'
+						class="rounded-md border px-3 py-2 {result.metrics.status === 'pass'
+							? 'border-green-200 bg-green-50 text-green-900'
 							: result.metrics.status === 'warning'
-								? 'border-yellow-300 bg-yellow-50'
-								: 'border-red-200 bg-red-50'}"
+								? 'border-yellow-300 bg-yellow-50 text-yellow-900'
+								: 'border-red-200 bg-red-50 text-red-900'}"
 					>
-						<div class="flex items-center justify-between gap-2">
-							<p class="font-medium capitalize">Readability: {result.metrics.status}</p>
-							<p class="text-sm font-semibold">{result.metrics.score}/100</p>
-						</div>
+						<p class="text-sm font-medium">
+							{result.metrics.status === 'pass'
+								? 'We could read your resume.'
+								: result.metrics.status === 'warning'
+									? 'Some text may be missing. Check the preview.'
+									: "We couldn't read enough text. Try another file."}
+						</p>
 						{#if result.metrics.warnings.length}
-							<ul class="mt-2 list-disc space-y-1 pl-5 text-xs">
+							<ul class="mt-1 list-disc space-y-0.5 pl-5 text-xs">
 								{#each result.metrics.warnings as warning}
 									<li>{warning}</li>
 								{/each}
 							</ul>
 						{/if}
+						<p class="mt-1 text-xs opacity-80">
+							{result.metrics.wordCount} words &middot; {result.metrics.pageCount}
+							{result.metrics.pageCount === 1 ? 'page' : 'pages'} &middot; {METHOD_LABELS[result.metrics.method]} &middot;
+							{percent(result.metrics.alphanumericRatio)} text quality &middot; score {result.metrics.score}/100
+							{#if result.metrics.ocrPages > 0}
+								&middot; OCR on {result.metrics.ocrPages}
+								{result.metrics.ocrPages === 1 ? 'page' : 'pages'}, {Math.round(
+									result.metrics.ocrAverageConfidence ?? 0,
+								)}% confidence
+							{/if}
+						</p>
 					</div>
-
-					<dl class="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-						<div class="rounded bg-gray-50 p-2">
-							<dt class="text-xs text-gray-500">Words</dt>
-							<dd>{result.metrics.wordCount}</dd>
-						</div>
-						<div class="rounded bg-gray-50 p-2">
-							<dt class="text-xs text-gray-500">Pages</dt>
-							<dd>{result.metrics.pageCount}</dd>
-						</div>
-						<div class="rounded bg-gray-50 p-2">
-							<dt class="text-xs text-gray-500">Method</dt>
-							<dd class="capitalize">{result.metrics.method}</dd>
-						</div>
-						<div class="rounded bg-gray-50 p-2">
-							<dt class="text-xs text-gray-500">Text quality</dt>
-							<dd>{percent(result.metrics.alphanumericRatio)}</dd>
-						</div>
-						{#if result.metrics.ocrPages > 0}
-							<div class="rounded bg-gray-50 p-2">
-								<dt class="text-xs text-gray-500">OCR pages</dt>
-								<dd>{result.metrics.ocrPages}</dd>
-							</div>
-							<div class="rounded bg-gray-50 p-2">
-								<dt class="text-xs text-gray-500">OCR confidence</dt>
-								<dd>{Math.round(result.metrics.ocrAverageConfidence ?? 0)}%</dd>
-							</div>
-						{/if}
-					</dl>
 
 					<div>
-						<p class="mb-1 text-xs font-medium text-gray-600">Extracted text preview</p>
+						<p class="mb-1 text-xs font-medium text-gray-600">Text that will be sent</p>
 						<pre
-							class="max-h-40 overflow-auto whitespace-pre-wrap rounded border bg-gray-50 p-3 text-xs">{result.preview}</pre>
+							class="max-h-32 overflow-auto whitespace-pre-wrap rounded border bg-gray-50 p-3 text-xs">{result.preview}</pre>
 					</div>
 
-					<label class="flex items-start gap-2 rounded border border-gray-200 p-3">
+					<label class="flex items-start gap-2">
 						<input
 							class="mt-0.5"
 							type="checkbox"
@@ -258,17 +248,17 @@
 							disabled={result.metrics.status === 'fail'}
 						/>
 						<span class="text-sm font-normal text-gray-700">
-							Send this text to AI to fill in the form. The original file stays in my browser.
+							Send this text to AI. Your original file stays on your device.
 						</span>
 					</label>
 
 					<div class="flex justify-between gap-2">
-						<button class="secondary" type="button" onclick={reset}>Pick another file</button>
+						<button class="secondary" type="button" onclick={reset}>Back</button>
 						<button
 							class="primary"
 							type="button"
 							onclick={sendToAI}
-							disabled={!acknowledged || result.metrics.status === 'fail'}>Fill form with AI</button
+							disabled={!acknowledged || result.metrics.status === 'fail'}>Fill in my resume</button
 						>
 					</div>
 				</div>
