@@ -53,7 +53,7 @@
 				class="flex-1 resize-none overflow-hidden"
 				class:ai-filled={aiFilled.has(`${path}.${bi}`)}
 				{@attach autosize(bullets[bi])}
-				onkeydown={(e) => e.key === 'Enter' && e.preventDefault()}
+				onkeydown={(e) => e.key === 'Enter' && !e.isComposing && e.preventDefault()}
 				oninput={(e) => handleInput(e, bi)}
 			></textarea>
 			{#if bullets.length > 1}<button
