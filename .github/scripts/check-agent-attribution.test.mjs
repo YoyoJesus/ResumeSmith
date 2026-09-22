@@ -6,7 +6,7 @@ describe("validateAttribution", () => {
   it("accepts an exact footer at the end of an AI submission", () => {
     assert.equal(
       validateAttribution(
-        "Summary\n\nAgent provider: OpenAI\nAgent model: gpt-5.6-sol\nAgent harness: Codex",
+        "Summary\n\nAgent provider: OpenAI\nAgent model: gpt-6-sol\nAgent harness: Codex",
       ).valid,
       true,
     );
@@ -15,7 +15,7 @@ describe("validateAttribution", () => {
   it("accepts GitHub bodies with CRLF line endings", () => {
     assert.equal(
       validateAttribution(
-        "Summary\r\n\r\nAgent provider: OpenAI\r\nAgent model: gpt-5.6-sol\r\nAgent harness: Codex\r\n",
+        "Summary\r\n\r\nAgent provider: OpenAI\r\nAgent model: gpt-6-sol\r\nAgent harness: Codex\r\n",
       ).valid,
       true,
     );
@@ -24,7 +24,7 @@ describe("validateAttribution", () => {
   it("accepts an exact footer followed by CodeRabbit release notes", () => {
     assert.equal(
       validateAttribution(
-        "Summary\n\nAgent provider: OpenAI\nAgent model: gpt-5.6-sol\nAgent harness: Codex\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n- A generated note\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
+        "Summary\n\nAgent provider: OpenAI\nAgent model: gpt-6-sol\nAgent harness: Codex\n\n<!-- This is an auto-generated comment: release notes by coderabbit.ai -->\n\n## Summary by CodeRabbit\n\n- A generated note\n\n<!-- end of auto-generated comment: release notes by coderabbit.ai -->",
       ).valid,
       true,
     );
@@ -33,13 +33,13 @@ describe("validateAttribution", () => {
   it("rejects missing, partial, misplaced, and placeholder footers", () => {
     assert.equal(validateAttribution("Summary only").valid, false);
     assert.equal(
-      validateAttribution("Agent provider: OpenAI\nAgent model: gpt-5.6-sol")
+      validateAttribution("Agent provider: OpenAI\nAgent model: gpt-6-sol")
         .valid,
       false,
     );
     assert.equal(
       validateAttribution(
-        "Agent provider: OpenAI\nAgent model: gpt-5.6-sol\nAgent harness: Codex\nMore text",
+        "Agent provider: OpenAI\nAgent model: gpt-6-sol\nAgent harness: Codex\nMore text",
       ).valid,
       false,
     );

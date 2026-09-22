@@ -1,6 +1,6 @@
 import type { ExtractedResume } from '$lib/types';
 
-export const MODEL = 'gpt-5.6-luna';
+export const MODEL = 'gpt-6-luna';
 
 export type ExtractErrorCode =
 	| 'invalid_file'

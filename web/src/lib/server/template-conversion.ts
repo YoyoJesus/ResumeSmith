@@ -2,7 +2,7 @@ import JSZip from 'jszip';
 import type { Readable } from 'node:stream';
 export { DOCX_TEMPLATE_MAX_BYTES } from '$lib/template-limits';
 
-export const TEMPLATE_CONVERSION_MODEL = 'gpt-5.6-luna';
+export const TEMPLATE_CONVERSION_MODEL = 'gpt-6-luna';
 export const TEMPLATE_CONTENT_MARKER = '// ========== RESUME CONTENT ==========';
 export const MAX_OOXML_CONTEXT_CHARS = 180_000;
 export const MAX_OOXML_PART_BYTES = 1024 * 1024;
