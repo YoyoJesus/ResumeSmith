@@ -7,6 +7,10 @@ export function generateId(): string {
 	return Math.random().toString(36).substring(2, 9);
 }
 
+export function toSingleLine(value: string): string {
+	return value.replace(/[\r\n]+/g, ' ');
+}
+
 export function formatDate(dateStr: string | undefined): string {
 	if (!dateStr) return '';
 	const [year, month] = dateStr.split('-');

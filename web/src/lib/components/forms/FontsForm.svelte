@@ -54,7 +54,7 @@
 	<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 		{#each SIZES as size (size.key)}
 			{@const [min, max] = FONT_SIZE_BOUNDS[size.key]}
-			<div>
+			<div class="min-w-0">
 				<label for={`font-${size.key}`}>{size.label}</label>
 				<div class="flex items-center gap-2">
 					<input
@@ -64,17 +64,18 @@
 						{max}
 						step="0.1"
 						bind:value={data.fonts[size.key]}
-						class="flex-1"
+						class="min-w-0 flex-1"
 					/>
 					<button
-						class="secondary px-2 py-0.5 text-sm"
+						class="secondary shrink-0 px-2 py-0.5 text-sm"
 						onclick={() => (data.fonts[size.key] = stepFontSize(data.fonts[size.key], -FONT_SIZE_STEP, size.key))}
 						disabled={data.fonts[size.key] <= min}
 						aria-label={`Decrease ${size.label.toLowerCase()} by ${FONT_SIZE_STEP} pt`}>-</button
 					>
-					<span class="text-sm font-mono w-14 text-center">{data.fonts[size.key]}pt</span>
+					<span class="min-w-14 shrink-0 whitespace-nowrap text-center font-mono text-sm">{data.fonts[size.key]}pt</span
+					>
 					<button
-						class="secondary px-2 py-0.5 text-sm"
+						class="secondary shrink-0 px-2 py-0.5 text-sm"
 						onclick={() => (data.fonts[size.key] = stepFontSize(data.fonts[size.key], FONT_SIZE_STEP, size.key))}
 						disabled={data.fonts[size.key] >= max}
 						aria-label={`Increase ${size.label.toLowerCase()} by ${FONT_SIZE_STEP} pt`}>+</button

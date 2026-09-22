@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildResumeFromExtraction, estimateOverOnePage } from './resume-utils';
+import { buildResumeFromExtraction, estimateOverOnePage, toSingleLine } from './resume-utils';
 import { defaultResumeData } from './types';
 import type { ExtractedResume, ResumeData } from './types';
 
@@ -44,5 +44,15 @@ describe('estimateOverOnePage clearance weight', () => {
 
 		data.clearance = [{ id: '1', level: 'Secret', status: 'Active', dateGranted: '' }];
 		expect(estimateOverOnePage(data)).toBe(true);
+	});
+});
+
+describe('toSingleLine', () => {
+	it('replaces pasted line breaks with single spaces', () => {
+		expect(toSingleLine('Built a\r\nsync engine\n\nfor Entra')).toBe('Built a sync engine for Entra');
+	});
+
+	it('leaves single-line text unchanged', () => {
+		expect(toSingleLine('Shipped v2')).toBe('Shipped v2');
 	});
 });
