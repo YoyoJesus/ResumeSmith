@@ -126,6 +126,68 @@ The pull-request workflow validates every commit in the PR. You can run the same
 node .github/scripts/check-commit-messages.mjs main HEAD
 ```
 
+## Your first contribution
+
+This is a short path from picking an issue to validating a small, browser-only change. It links to the existing policies in this file instead of restating them; read the sections above before you push.
+
+### 1. Choose an issue
+
+- **`good first issue`** — a small, well-scoped task with a clear starting point. These are chosen so a first contribution is realistic without deep familiarity with the codebase.
+- **`help wanted`** — contributions are welcome, but the issue may be larger or require discussion. Check the issue's scope and acceptance criteria before claiming it.
+- **`area:` labels** (`area: ai`, `area: editor`, `area: import-export`, `area: preview`, `area: templates`, `area: tooling`) name the part of the project an issue touches, so you can stay in one area.
+- **`size:` labels** (`size: small`, `size: medium`, `size: large`) describe the **scope of the change**, not a delivery deadline. A `size: small` issue is localized with limited integration work; it is not a time estimate.
+
+Browse this repository's filtered lists:
+
+- [Good first issues](https://github.com/YoyoJesus/ResumeSmith/labels/good%20first%20issue)
+- [Help wanted](https://github.com/YoyoJesus/ResumeSmith/labels/help%20wanted)
+
+If you are unsure whether an issue fits, ask in the issue before starting.
+
+### 2. Identify the files to change
+
+Each issue usually points at an entry file. To locate it:
+
+- Browser-facing shared code lives in `web/src/lib/` and routes in `web/src/routes/` (see [Project layout](#project-layout)).
+- Search the repository for the component, label, or string named in the issue, then read the neighboring files to confirm the change is localized.
+
+### 3. Run the editor locally without API keys
+
+Many UI-only changes do not need AI or O*NET features, so you can run the app without any keys:
+
+```sh
+cd web
+npm install
+npm run dev
+```
+
+The dev server prints a local URL; open it in a browser. Routes that call AI or O*NET features need the corresponding keys from `.env.example` before they will work — for those, use **synthetic fixtures instead of real resumes** and follow the privacy rules in [Privacy and uploads](#privacy-and-uploads). Never commit a `.env`, key, or real resume.
+
+### 4. Validate a small browser-only change
+
+Before opening a pull request, run the same checks listed in [Validation](#validation) from `web/`:
+
+```sh
+npm test
+npm run check
+npm run lint
+npm run build
+```
+
+For a pure browser change, exercise the flow manually in the dev server as well (open the affected screen, confirm the behavior, and check the browser console for errors).
+
+If a platform-specific build step fails after Vite compiles the client and server bundles, describe the exact environment and failure in your pull request — do not present a failed build as passing.
+
+### 5. Follow the existing policies
+
+Do not introduce a second set of rules. Reuse the ones already in this file:
+
+- Branching, commits, and focus: [Making changes](#making-changes) and [Commit messages](#commit-messages). Commits are a single line with no body or footer, and the PR workflow validates every commit.
+- Contributor conduct and attribution: [Code of Conduct](CODE_OF_CONDUCT.md) and [AI attribution](#ai-attribution). If you wrote the pull request yourself, keep the `AI assistance: no` line and enter `Not AI-generated` on issues.
+- Privacy: [Privacy and uploads](#privacy-and-uploads). Treat uploaded content as untrusted and use synthetic fixtures.
+
+For a first pull request, keep it to one focused change and list the validation commands you ran and their results, as described in [Pull requests](#pull-requests).
+
 ## Pull requests
 
 - Keep the change focused and explain the user-visible outcome.
