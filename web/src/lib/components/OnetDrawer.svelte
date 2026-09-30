@@ -8,6 +8,7 @@
 	import { appendBullet, appendSkill, appendSkillToNewCategory, bulletTargets, skillTargets } from '$lib/onet-insert';
 	import { applyTailorEdits } from '$lib/onet-apply';
 	import { aiFilled } from '$lib/ai-highlight';
+	import { createOnetSearchScheduler, fetchOnetOccupations, GENERIC_ONET_ERROR } from '$lib/onet-search-scheduler';
 	import OnetInsertMenu from './OnetInsertMenu.svelte';
 
 	let {
@@ -32,11 +33,40 @@
 	let tailorNote = $state('');
 	let tailorController: AbortController | null = null;
 	let tailorRequest = 0;
-	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 	let drawer = $state<HTMLElement>();
 	let searchInput = $state<HTMLInputElement>();
 
-	const GENERIC_ERROR = "Can't reach O*NET. Check your connection and retry.";
+	const GENERIC_ERROR = GENERIC_ONET_ERROR;
+
+	const searchScheduler = createOnetSearchScheduler(fetchOnetOccupations, {
+		onStart: () => {
+			searching = true;
+			error = '';
+		},
+		onResult: (occupations) => {
+			results = occupations;
+			searched = true;
+		},
+		onError: (errMessage) => {
+			error = errMessage;
+			results = [];
+		},
+		onCleared: () => {
+			results = [];
+			searched = false;
+			error = '';
+		},
+		onSettled: () => {
+			searching = false;
+		},
+	});
+
+	$effect(() => {
+		return () => {
+			searchScheduler.cancel();
+			abandonPendingTailor();
+		};
+	});
 
 	$effect(() => {
 		if (!open) return;
@@ -59,38 +89,12 @@
 		}
 	}
 
-	async function runSearch(keyword: string) {
-		if (!keyword.trim()) {
-			results = [];
-			searched = false;
-			return;
-		}
-		searching = true;
-		error = '';
-		try {
-			const res = await fetch(`/api/onet/search?keyword=${encodeURIComponent(keyword)}`);
-			if (!res.ok) {
-				error = await readError(res);
-				results = [];
-			} else {
-				results = (await res.json()).occupations;
-			}
-			searched = true;
-		} catch {
-			error = GENERIC_ERROR;
-			results = [];
-		} finally {
-			searching = false;
-		}
-	}
-
 	function onQueryInput() {
-		clearTimeout(searchTimer);
-		const keyword = query;
-		searchTimer = setTimeout(() => runSearch(keyword), 300);
+		searchScheduler.schedule(query);
 	}
 
 	async function load(ref: OnetOccupationRef) {
+		searchScheduler.cancel();
 		onetStore.select(ref);
 		onetStore.saveToStorage();
 		results = [];
@@ -120,6 +124,7 @@
 	}
 
 	function changeOccupation() {
+		searchScheduler.cancel();
 		occupation = null;
 		error = '';
 		tailorError = '';
@@ -231,6 +236,8 @@
 	}
 
 	function close() {
+		searchScheduler.cancel();
+		abandonPendingTailor();
 		open = false;
 		menuFor = null;
 		// Clear the error so reopening retries. The auto-load effect below bails
