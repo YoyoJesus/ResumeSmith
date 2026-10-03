@@ -2,6 +2,8 @@
 	import type { Attachment } from 'svelte/attachments';
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { toSingleLine } from '$lib/resume-utils';
+	import { moveAt, moveWithHighlights, type MoveDirection } from '$lib/reorder';
+	import MoveControls from './MoveControls.svelte';
 
 	let {
 		bullets = $bindable(),
@@ -9,12 +11,24 @@
 		path = '',
 		placeholder = '',
 	}: { bullets: string[]; label: string; path?: string; placeholder?: string } = $props();
+	let nextKey = 0;
+	let bulletKeys = $state(bullets.map(() => nextKey++));
+	$effect(() => {
+		if (bulletKeys.length !== bullets.length) bulletKeys = bullets.map((_, index) => bulletKeys[index] ?? nextKey++);
+	});
 
 	function addBullet() {
+		bulletKeys = [...bulletKeys, nextKey++];
 		bullets = [...bullets, ''];
 	}
 	function removeBullet(index: number) {
+		bulletKeys = bulletKeys.filter((_, i) => i !== index);
 		bullets = bullets.filter((_, i) => i !== index);
+	}
+	function moveBullet(index: number, direction: MoveDirection) {
+		if (index + direction < 0 || index + direction >= bullets.length) return;
+		bulletKeys = moveAt(bulletKeys, index, direction);
+		bullets = moveWithHighlights(bullets, path, index, direction);
 	}
 
 	// Re-runs whenever the bullet text changes, including programmatic updates.
@@ -44,9 +58,10 @@
 		<label class="mb-0">{label}</label>
 		<button class="secondary text-xs px-2 py-1" onclick={addBullet}>+ Add bullet</button>
 	</div>
-	{#each bullets as _, bi}
-		<div class="flex gap-2 mb-2">
+	{#each bullets as _, bi (bulletKeys[bi] ?? `pending-${bi}`)}
+		<div class="flex flex-wrap items-start gap-2 mb-2">
 			<textarea
+				aria-label={`${label} bullet ${bi + 1}`}
 				rows="1"
 				bind:value={bullets[bi]}
 				{placeholder}
@@ -56,6 +71,12 @@
 				onkeydown={(e) => e.key === 'Enter' && !e.isComposing && e.preventDefault()}
 				oninput={(e) => handleInput(e, bi)}
 			></textarea>
+			<MoveControls
+				index={bi}
+				count={bullets.length}
+				label={`${label} bullet ${bi + 1}`}
+				onMove={(direction) => moveBullet(bi, direction)}
+			/>
 			{#if bullets.length > 1}<button
 					class="danger self-start text-xs px-2"
 					onclick={() => removeBullet(bi)}
