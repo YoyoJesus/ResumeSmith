@@ -60,11 +60,16 @@ function createBibliographyStore() {
 				write(null);
 				return;
 			}
-			if (!isBibliography(saved) || (await validateBibliography(saved))) {
+			if (!isBibliography(saved)) {
 				write(null);
 				return;
 			}
+			const invalid = await validateBibliography(saved);
 			if (loadGeneration !== generation) return;
+			if (invalid) {
+				write(null);
+				return;
+			}
 			set(saved);
 		},
 		save: (bibliography: Bibliography) => write(bibliography),

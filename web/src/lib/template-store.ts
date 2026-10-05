@@ -200,15 +200,15 @@ function createCustomTemplateStore(documentType: DocumentType) {
 				return;
 			}
 
-			if (
+			const invalid =
 				typeof template?.name !== 'string' ||
 				typeof template?.source !== 'string' ||
-				(await validateTemplateCompatibility(template.source, documentType))
-			) {
+				(await validateTemplateCompatibility(template.source, documentType));
+			if (loadGeneration !== generation) return;
+			if (invalid) {
 				removeStoredTemplate(storage, key);
 				return;
 			}
-			if (loadGeneration !== generation) return;
 			set(template);
 		},
 		save: (template: CustomTemplate) => {

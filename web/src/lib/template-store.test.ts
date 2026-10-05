@@ -204,6 +204,21 @@ describe('custom Typst templates', () => {
 		expect(get(customTemplateStores.resume)).toBeNull();
 	});
 
+	it.each(['resume', 'cv'] as const)('keeps a newer %s template when an older load fails validation', async (type) => {
+		const store = customTemplateStores[type];
+		const key = templateStorageKey(type);
+		window.sessionStorage.setItem(key, JSON.stringify({ name: 'old.typ', source: VALID_TEMPLATE }));
+		let rejectValidation!: (error: Error) => void;
+		vi.mocked(compileToPdf).mockImplementationOnce(() => new Promise((_, reject) => (rejectValidation = reject)));
+		const loading = store.loadFromStorage();
+		const newer = { name: 'new.typ', source: `${VALID_TEMPLATE}\n// New template` };
+		store.save(newer);
+		rejectValidation(new Error('old template is incompatible'));
+		await loading;
+		expect(get(store)).toEqual(newer);
+		expect(JSON.parse(window.sessionStorage.getItem(key)!)).toEqual(newer);
+	});
+
 	it('does not restore a template when its asynchronous validation finishes after clear', async () => {
 		const template = { name: 'mine.typ', source: VALID_TEMPLATE };
 		window.sessionStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(template));

@@ -18,11 +18,13 @@
 	// Text being typed. Null means the field mirrors the stored value, so resets and restores show up immediately.
 	let draft = $state<string | null>(null);
 	let note = $state('');
+	let originalValue: number | undefined;
 
 	const shown = $derived(draft ?? formatFontSize(value, sizeKey));
 	const invalid = $derived(draft !== null && parseFontSizeDraft(draft, sizeKey).status !== 'valid');
 
 	function onInput(event: Event & { currentTarget: HTMLInputElement }) {
+		if (draft === null) originalValue = value;
 		draft = event.currentTarget.value;
 		note = '';
 		const parsed = parseFontSizeDraft(draft, sizeKey);
@@ -35,6 +37,7 @@
 		const result = commitFontSizeDraft(draft, sizeKey, value);
 		if (result.value !== value) value = result.value;
 		draft = null;
+		originalValue = undefined;
 		if (result.outcome === 'clamped') note = `Adjusted to ${result.value} pt, the allowed range is ${min}–${max} pt.`;
 		else if (result.outcome === 'restored') note = `Enter a number from ${min} to ${max}. Kept ${result.value} pt.`;
 		else note = '';
@@ -42,6 +45,7 @@
 
 	function step(delta: number) {
 		draft = null;
+		originalValue = undefined;
 		note = '';
 		value = stepFontSize(value, delta, sizeKey);
 	}
@@ -53,6 +57,8 @@
 		} else if (event.key === 'Escape' && draft !== null) {
 			event.preventDefault();
 			event.stopPropagation();
+			if (originalValue !== undefined) value = originalValue;
+			originalValue = undefined;
 			draft = null;
 			note = '';
 		} else if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {

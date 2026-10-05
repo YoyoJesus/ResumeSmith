@@ -310,14 +310,14 @@
 					</div>
 
 					<div>
-						<p class="mb-1 text-xs font-medium text-gray-600">Text that will be sent</p>
+						<p class="mb-1 text-xs font-medium text-gray-600">Extracted-text preview (first 900 characters)</p>
 						<pre
 							class="max-h-32 overflow-auto whitespace-pre-wrap rounded border bg-gray-50 p-3 text-xs">{result.preview}</pre>
 					</div>
 
 					<p id="upload-ai-consent" class="text-sm text-gray-700">
-						Clicking Send to AI sends the extracted text above to AI to fill in your {noun}. Your original file stays on
-						your device.
+						Clicking Send to AI sends the full extracted text to AI to fill in your {noun}. The preview above shows at
+						most the first 900 characters. Your original file stays on your device.
 					</p>
 
 					<div class="flex justify-between gap-2">
