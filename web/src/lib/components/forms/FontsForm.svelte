@@ -57,7 +57,7 @@
 		<div>
 			<h3 id="font-sizes-title" class="editor-subheading">Sizes</h3>
 			<p class="editor-description mt-1">
-				Type a size in points, or use the arrow keys or − and + to nudge it by 0.5 pt.
+				Enter a size in points or use the arrow keys, −, and + to change it by 0.5 pt.
 			</p>
 		</div>
 		<div class="divide-y divide-gray-200">

@@ -228,7 +228,7 @@
 							<p id="header-menu-formats" class="menu-heading">Other formats</p>
 							{@render menuItem(
 								'Download Typst',
-								'The Typst source, or the empty template if there is no content yet',
+								'Typst source, or an empty template if there is no content',
 								onDownloadTypst,
 							)}
 							{@render menuItem('Copy resume text', 'Readable text for application forms', onCopyText)}
@@ -246,7 +246,7 @@
 								onclick={() => choose(onClearData)}
 							>
 								<span class="block text-sm font-medium">Delete saved data</span>
-								<span class="block text-xs text-red-600">Remove ResumeSmith data from this browser</span>
+								<span class="block text-xs text-red-600">Remove saved data from this browser</span>
 							</button>
 						</div>
 					</div>

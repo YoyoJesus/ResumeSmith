@@ -236,7 +236,7 @@
 						>
 					{/each}
 				</div>
-				<p class="text-sm text-gray-600">Text is read in your browser. You'll preview it before anything goes to AI.</p>
+				<p class="text-sm text-gray-600">Text is read in your browser. Review it before sending it to AI.</p>
 				{#if importType === 'cv'}
 					<p class="text-xs text-gray-500">
 						Long CVs are sent in parts, one after another. A 20-page CV can take a few minutes.
@@ -257,7 +257,7 @@
 				>
 					<span class="text-gray-600">Drag a file here, or click to browse</span>
 					<span class="mt-1 block text-xs text-gray-400"
-						>PDF, DOCX, or TXT — max 5 MB, {importType === 'cv' ? MAX_CV_PDF_PAGES : MAX_PDF_PAGES} PDF pages</span
+						>PDF, DOCX, or TXT. Max 5 MB and {importType === 'cv' ? MAX_CV_PDF_PAGES : MAX_PDF_PAGES} PDF pages</span
 					>
 				</button>
 				<input bind:this={fileInput} type="file" accept={ACCEPT} class="hidden" onchange={onPick} />
@@ -316,8 +316,8 @@
 					</div>
 
 					<p id="upload-ai-consent" class="text-sm text-gray-700">
-						Clicking Send to AI sends the full extracted text to AI to fill in your {noun}. The preview above shows at
-						most the first 900 characters. Your original file stays on your device.
+						Send to AI shares the full extracted text to fill in your {noun}. The preview shows the first 900
+						characters. Your original file stays on your device.
 					</p>
 
 					<div class="flex justify-between gap-2">

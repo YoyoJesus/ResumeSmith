@@ -62,7 +62,7 @@
 		>
 			<h2 id="clear-data-title" class="text-lg font-semibold">Delete saved data?</h2>
 			<div id="clear-data-description" class="space-y-2 text-sm text-gray-700">
-				<p>This permanently removes ResumeSmith data saved in this browser:</p>
+				<p>This permanently deletes data saved in this browser:</p>
 				<ul class="list-disc space-y-1 pl-5">
 					<li>resume and CV data</li>
 					<li>saved occupation</li>

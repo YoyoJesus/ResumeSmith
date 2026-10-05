@@ -37,8 +37,7 @@
 		<button class="primary editor-add" onclick={addSection}>+ Add section</button>
 	</div>
 	<p class="editor-description">
-		Name a section yourself, such as Grants, Teaching, Talks, or Service, and fill it with entries. Reorder sections in
-		the Layout tab.
+		Add a section such as Grants, Teaching, Talks, or Service, then add entries. Reorder sections in the Layout tab.
 	</p>
 	{#each data.customSections as section, si (section.id)}
 		<div class="editor-section">

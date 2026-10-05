@@ -89,7 +89,7 @@
 				aria-describedby="publication-author-name-help"
 			/>
 			<p id="publication-author-name-help" class="mt-1 text-xs text-gray-500">
-				Written exactly as in your author lists. It is shown in bold wherever it appears.
+				Enter your name as it appears in author lists. It will be bolded.
 			</p>
 		</div>
 	</div>
@@ -98,8 +98,8 @@
 			<div>
 				<h3 class="text-sm font-semibold text-gray-900">BibTeX file (optional)</h3>
 				<p class="editor-description mt-1 text-xs">
-					Every entry is listed after the publications below. The file stays in this browser and is never sent to AI. Up
-					to {MAX_BIBLIOGRAPHY_LABEL}.
+					Entries appear after the publications below. The file stays in this browser and is never sent to AI. Max
+					{MAX_BIBLIOGRAPHY_LABEL}.
 				</p>
 			</div>
 			{#if $bibliographyStore}
