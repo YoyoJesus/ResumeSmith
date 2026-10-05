@@ -203,4 +203,19 @@ describe('custom Typst templates', () => {
 		expect(get(customTemplateStores.cv)).toEqual(template);
 		expect(get(customTemplateStores.resume)).toBeNull();
 	});
+
+	it('does not restore a template when its asynchronous validation finishes after clear', async () => {
+		const template = { name: 'mine.typ', source: VALID_TEMPLATE };
+		window.sessionStorage.setItem(TEMPLATE_STORAGE_KEY, JSON.stringify(template));
+		let finishValidation!: (value: Uint8Array) => void;
+		vi.mocked(compileToPdf).mockImplementationOnce(() => new Promise((resolve) => (finishValidation = resolve)));
+
+		const loading = customTemplateStore.loadFromStorage();
+		customTemplateStore.clear();
+		finishValidation(new Uint8Array([1]));
+		await loading;
+
+		expect(get(customTemplateStore)).toBeNull();
+		expect(window.sessionStorage.getItem(TEMPLATE_STORAGE_KEY)).toBeNull();
+	});
 });

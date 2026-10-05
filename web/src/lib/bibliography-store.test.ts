@@ -69,4 +69,18 @@ describe('bibliography store', () => {
 		expect(get(bibliographyStore)).toBeNull();
 		expect(window.localStorage.getItem(BIBLIOGRAPHY_STORAGE_KEY)).toBeNull();
 	});
+
+	it('does not restore a bibliography when validation finishes after clear', async () => {
+		window.localStorage.setItem(BIBLIOGRAPHY_STORAGE_KEY, JSON.stringify(bibliography));
+		let finishValidation!: (value: Uint8Array) => void;
+		vi.mocked(compileToPdf).mockImplementationOnce(() => new Promise((resolve) => (finishValidation = resolve)));
+
+		const loading = bibliographyStore.loadFromStorage();
+		bibliographyStore.clear();
+		finishValidation(new Uint8Array([1]));
+		await loading;
+
+		expect(get(bibliographyStore)).toBeNull();
+		expect(window.localStorage.getItem(BIBLIOGRAPHY_STORAGE_KEY)).toBeNull();
+	});
 });

@@ -33,8 +33,10 @@ function storage(): Storage | null {
 
 function createBibliographyStore() {
 	const { subscribe, set } = writable<Bibliography | null>(null);
+	let generation = 0;
 
 	function write(value: Bibliography | null) {
+		generation++;
 		try {
 			if (value) storage()?.setItem(BIBLIOGRAPHY_STORAGE_KEY, JSON.stringify(value));
 			else storage()?.removeItem(BIBLIOGRAPHY_STORAGE_KEY);
@@ -47,6 +49,7 @@ function createBibliographyStore() {
 	return {
 		subscribe,
 		loadFromStorage: async () => {
+			const loadGeneration = generation;
 			let saved: unknown;
 			try {
 				const raw = storage()?.getItem(BIBLIOGRAPHY_STORAGE_KEY);
@@ -61,6 +64,7 @@ function createBibliographyStore() {
 				write(null);
 				return;
 			}
+			if (loadGeneration !== generation) return;
 			set(saved);
 		},
 		save: (bibliography: Bibliography) => write(bibliography),

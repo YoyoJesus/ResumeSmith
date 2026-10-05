@@ -172,11 +172,13 @@ function removeStoredTemplate(storage: Storage, key: string): void {
 function createCustomTemplateStore(documentType: DocumentType) {
 	const { subscribe, set } = writable<CustomTemplate | null>(null);
 	const key = templateStorageKey(documentType);
+	let generation = 0;
 
 	return {
 		subscribe,
 		loadFromStorage: async () => {
 			if (typeof window === 'undefined') return;
+			const loadGeneration = generation;
 
 			let storage: Storage;
 			let saved: string | null;
@@ -206,9 +208,11 @@ function createCustomTemplateStore(documentType: DocumentType) {
 				removeStoredTemplate(storage, key);
 				return;
 			}
+			if (loadGeneration !== generation) return;
 			set(template);
 		},
 		save: (template: CustomTemplate) => {
+			generation++;
 			try {
 				if (typeof window !== 'undefined') {
 					window.sessionStorage.setItem(key, JSON.stringify(template));
@@ -219,6 +223,7 @@ function createCustomTemplateStore(documentType: DocumentType) {
 			set(template);
 		},
 		clear: () => {
+			generation++;
 			try {
 				if (typeof window !== 'undefined') window.sessionStorage.removeItem(key);
 			} catch (error) {
