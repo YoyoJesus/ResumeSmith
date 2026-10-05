@@ -183,14 +183,14 @@
 				>
 					More
 					<svg
-						class="h-4 w-4"
+						class="disclosure-chevron h-4 w-4"
 						viewBox="0 0 20 20"
 						fill="none"
 						stroke="currentColor"
 						stroke-width="2"
 						aria-hidden="true"
 					>
-						<path stroke-linecap="round" stroke-linejoin="round" d={menuOpen ? 'm5 12.5 5-5 5 5' : 'm5 7.5 5 5 5-5'} />
+						<path stroke-linecap="round" stroke-linejoin="round" d="m5 7.5 5 5 5-5" />
 					</svg>
 				</button>
 				<button class="primary compact text-sm disabled:opacity-60" onclick={onDownload} disabled={isCompiling}>
@@ -267,6 +267,14 @@
 </header>
 
 <style>
+	.disclosure-chevron {
+		transform: rotate(0deg);
+	}
+
+	button[aria-expanded='true'] .disclosure-chevron {
+		transform: rotate(180deg);
+	}
+
 	/* The global button rule in app.css is unlayered, so these sizes are set here rather than with utilities. */
 	.segment {
 		padding: 0.375rem 0.75rem;
@@ -307,5 +315,46 @@
 		letter-spacing: 0.025em;
 		text-transform: uppercase;
 		color: var(--color-gray-500);
+	}
+
+	/* Animate paint only: focus and dismissal remain immediate, with no lingering menu. */
+	@media (prefers-reduced-motion: no-preference) {
+		button {
+			transition:
+				background-color 140ms ease-out,
+				color 140ms ease-out,
+				box-shadow 140ms ease-out,
+				opacity 140ms ease-out,
+				transform 100ms ease-out;
+		}
+
+		button:active:not(:disabled) {
+			transform: translateY(1px);
+		}
+
+		.disclosure-chevron {
+			transition: transform 160ms ease-out;
+		}
+
+		#header-more-menu {
+			animation: menu-reveal 160ms ease-out;
+		}
+	}
+
+	@keyframes menu-reveal {
+		from {
+			opacity: 0;
+			transform: translateY(-4px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		button {
+			transition: none;
+		}
 	}
 </style>

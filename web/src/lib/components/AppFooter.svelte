@@ -20,7 +20,7 @@
 </script>
 
 {#snippet external(href: string, label: string, accent = false)}
-	<a {href} target="_blank" rel="noopener noreferrer" class={accent ? accentClass : linkClass}>{label}</a>
+	<a {href} target="_blank" rel="noopener noreferrer" class="footer-link {accent ? accentClass : linkClass}">{label}</a>
 {/snippet}
 
 <footer class="bg-white border-t border-gray-200 mt-auto">
@@ -76,3 +76,13 @@
 		</div>
 	</div>
 </footer>
+
+<style>
+	@media (prefers-reduced-motion: no-preference) {
+		.footer-link {
+			transition:
+				color 140ms ease-out,
+				text-decoration-color 140ms ease-out;
+		}
+	}
+</style>
