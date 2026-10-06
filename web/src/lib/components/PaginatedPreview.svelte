@@ -1,14 +1,39 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import type { CompiledPreview } from '$lib/pdf-compiler';
+	import {
+		BASE_PREVIEW_WIDTH,
+		MAX_PREVIEW_ZOOM,
+		MIN_PREVIEW_ZOOM,
+		previewWidth,
+		stepPreviewZoom,
+		type PreviewZoom,
+	} from '$lib/preview-zoom';
 
 	// The page is bindable because the preview remounts on every recompile; the parent keeps the reader's place.
 	let {
 		preview,
 		documentLabel,
 		pageIndex = $bindable(0),
-	}: { preview: CompiledPreview; documentLabel: string; pageIndex?: number } = $props();
+		zoom = $bindable<PreviewZoom>('page'),
+	}: { preview: CompiledPreview; documentLabel: string; pageIndex?: number; zoom?: PreviewZoom } = $props();
 	let pageSvgs = $state<string[]>([]);
+	let availableWidth = $state(BASE_PREVIEW_WIDTH);
+	let availableHeight = $state(Infinity);
+	let scroller = $state<HTMLElement>();
+	let currentPage = $derived(preview.pages[pageIndex] ?? preview.pages[0]);
+	let pageWidth = $derived(previewWidth(availableWidth, zoom, availableHeight, currentPage.width / currentPage.height));
+	let effectiveZoom = $derived((pageWidth / BASE_PREVIEW_WIDTH) * 100);
+
+	$effect(() => {
+		if (!scroller) return;
+		const observer = new ResizeObserver(([entry]) => {
+			availableWidth = entry.contentRect.width;
+			availableHeight = entry.contentRect.height;
+		});
+		observer.observe(scroller);
+		return () => observer.disconnect();
+	});
 
 	function splitPages({ svg, pages }: CompiledPreview): string[] {
 		if (typeof DOMParser === 'undefined' || typeof XMLSerializer === 'undefined') return [];
@@ -59,51 +84,81 @@
 	});
 </script>
 
-{#if pageSvgs.length > 0 && pageSvgs.length === preview.pages.length}
-	<div
-		class="flex h-full min-h-0 w-full flex-col items-center gap-3"
-		aria-label={`${pageSvgs.length}-page ${documentLabel} preview`}
-	>
-		{#if pageSvgs.length > 1}
-			<nav class="flex w-full max-w-[510px] items-center justify-between gap-3" aria-label="Preview pages">
+<div
+	class="flex h-full min-h-0 w-full flex-col items-center gap-3"
+	aria-label={`${preview.pages.length}-page ${documentLabel} preview`}
+>
+	<div class="flex w-full flex-wrap items-center justify-center gap-2" role="group" aria-label="Preview zoom">
+		<button
+			class="secondary px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+			aria-label="Zoom out preview"
+			disabled={effectiveZoom <= MIN_PREVIEW_ZOOM}
+			onclick={() => (zoom = stepPreviewZoom(effectiveZoom, -1))}>−</button
+		>
+		<span
+			class="min-w-12 text-center text-sm font-medium text-white"
+			aria-live={typeof zoom === 'number' ? 'polite' : 'off'}
+			>{typeof zoom === 'number'
+				? `${zoom}%`
+				: `${zoom === 'page' ? 'Page' : 'Width'} · ${Math.round(effectiveZoom)}%`}</span
+		>
+		<button
+			class="secondary px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+			aria-label="Zoom in preview"
+			disabled={effectiveZoom >= MAX_PREVIEW_ZOOM}
+			onclick={() => (zoom = stepPreviewZoom(effectiveZoom, 1))}>+</button
+		>
+		<button
+			class="secondary px-3 py-1 text-sm"
+			aria-label="Fit preview to width"
+			aria-pressed={zoom === null}
+			onclick={() => (zoom = null)}>Fit width</button
+		>
+		<button
+			class="secondary px-2 py-1 text-sm"
+			aria-label="Fit whole preview page"
+			aria-pressed={zoom === 'page'}
+			onclick={() => (zoom = 'page')}>Fit page</button
+		>
+		{#if pageSvgs.length > 1 && pageSvgs.length === preview.pages.length}
+			<nav class="flex items-center gap-2" aria-label="Preview pages">
 				<button
 					class="secondary px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
 					onclick={() => (pageIndex -= 1)}
 					disabled={pageIndex === 0}
-					aria-label="Previous preview page">← Previous</button
+					aria-label="Previous preview page">←</button
 				>
-				<span class="text-sm font-medium text-white" aria-live="polite">
-					Page {pageIndex + 1} of {pageSvgs.length}
-				</span>
+				<span class="text-sm font-medium text-white" aria-live="polite">{pageIndex + 1} / {pageSvgs.length}</span>
 				<button
 					class="secondary px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
 					onclick={() => (pageIndex += 1)}
 					disabled={pageIndex === pageSvgs.length - 1}
-					aria-label="Next preview page">Next →</button
+					aria-label="Next preview page">→</button
 				>
 			</nav>
 		{/if}
-		<figure
-			class="m-0 grid min-h-0 w-full flex-1 place-items-center overflow-hidden"
-			aria-label={`${documentLabel} page ${pageIndex + 1}`}
-		>
-			<div class="resume-page h-full w-full overflow-hidden">
+	</div>
+	<div
+		bind:this={scroller}
+		class="min-h-0 w-full flex-1 overflow-auto"
+		role="region"
+		aria-label={`${documentLabel} page ${pageIndex + 1}`}
+	>
+		<div class="resume-page mx-auto" style:width={`${pageWidth}px`}>
+			{#if pageSvgs.length > 0 && pageSvgs.length === preview.pages.length}
 				{@html pageSvgs[pageIndex]}
-			</div>
-		</figure>
+			{:else}
+				{@html preview.svg}
+			{/if}
+		</div>
 	</div>
-{:else}
-	<div class="resume-page grid h-full w-full place-items-center overflow-hidden">
-		{@html preview.svg}
-	</div>
-{/if}
+</div>
 
 <style>
 	.resume-page :global(svg) {
 		display: block;
 		width: 100%;
-		height: 100%;
-		max-width: 510px;
+		height: auto;
 		margin: 0 auto;
 	}
 </style>
