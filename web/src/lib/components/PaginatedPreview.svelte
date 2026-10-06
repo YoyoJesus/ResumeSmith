@@ -16,13 +16,30 @@
 		documentLabel,
 		pageIndex = $bindable(0),
 		zoom = $bindable<PreviewZoom>('page'),
-	}: { preview: CompiledPreview; documentLabel: string; pageIndex?: number; zoom?: PreviewZoom } = $props();
+		expanded = false,
+		onexpand,
+	}: {
+		preview: CompiledPreview;
+		documentLabel: string;
+		pageIndex?: number;
+		zoom?: PreviewZoom;
+		expanded?: boolean;
+		onexpand?: () => void;
+	} = $props();
 	let pageSvgs = $state<string[]>([]);
 	let availableWidth = $state(BASE_PREVIEW_WIDTH);
 	let availableHeight = $state(Infinity);
 	let scroller = $state<HTMLElement>();
 	let currentPage = $derived(preview.pages[pageIndex] ?? preview.pages[0]);
-	let pageWidth = $derived(previewWidth(availableWidth, zoom, availableHeight, currentPage.width / currentPage.height));
+	let pageWidth = $derived(
+		previewWidth(
+			availableWidth,
+			zoom,
+			availableHeight,
+			currentPage.width / currentPage.height,
+			expanded ? Infinity : BASE_PREVIEW_WIDTH,
+		),
+	);
 	let effectiveZoom = $derived((pageWidth / BASE_PREVIEW_WIDTH) * 100);
 
 	$effect(() => {
@@ -120,6 +137,26 @@
 			aria-pressed={zoom === 'page'}
 			onclick={() => (zoom = 'page')}>Fit page</button
 		>
+		{#if onexpand}
+			<button
+				type="button"
+				class="secondary flex items-center gap-1 px-3 py-1 text-sm"
+				aria-label="Open fullscreen preview"
+				aria-haspopup="dialog"
+				onclick={onexpand}
+			>
+				<svg
+					aria-hidden="true"
+					width="16"
+					height="16"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" /></svg
+				>
+				Fullscreen
+			</button>
+		{/if}
 		{#if pageSvgs.length > 1 && pageSvgs.length === preview.pages.length}
 			<nav class="flex items-center gap-2" aria-label="Preview pages">
 				<button
