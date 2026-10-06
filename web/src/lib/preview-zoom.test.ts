@@ -2,6 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { previewWidth, stepPreviewZoom } from './preview-zoom';
 
 describe('preview zoom', () => {
+	it('enlarges a fullscreen page while fitting both dimensions and preserving explicit zoom', () => {
+		expect(previewWidth(1200, 'page', 1000, 0.75, Infinity)).toBe(750);
+		expect(previewWidth(320, 'page', 700, 0.75, Infinity)).toBe(320);
+		expect(previewWidth(1200, 'page', 500, 1.5, Infinity)).toBe(750);
+		expect(previewWidth(0, 'page', 0, 0.75, Infinity)).toBe(1);
+		expect(previewWidth(1200, 150, 1000, 0.75, Infinity)).toBe(765);
+		expect(previewWidth(1200, null, 1000, 0.75, Infinity)).toBe(1200);
+	});
 	it('fits the whole initial page to both dimensions, including mixed page sizes', () => {
 		expect(previewWidth(780, 'page', 400, 0.75)).toBe(300);
 		expect(previewWidth(320, 'page', 700, 0.75)).toBe(320);

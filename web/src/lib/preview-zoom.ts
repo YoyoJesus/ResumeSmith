@@ -11,8 +11,9 @@ export function previewWidth(
 	zoom: PreviewZoom,
 	availableHeight = Infinity,
 	aspectRatio = 1,
+	maxPageWidth = BASE_PREVIEW_WIDTH,
 ): number {
-	if (zoom === 'page') return Math.max(1, Math.min(availableWidth, availableHeight * aspectRatio, BASE_PREVIEW_WIDTH));
+	if (zoom === 'page') return Math.max(1, Math.min(availableWidth, availableHeight * aspectRatio, maxPageWidth));
 	return zoom === null ? Math.max(1, availableWidth) : (BASE_PREVIEW_WIDTH * zoom) / 100;
 }
 
