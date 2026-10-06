@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { resumeStore } from '$lib/store';
 	import { onetStore } from '$lib/onet-store';
+	import { footerStore } from '$lib/footer-store';
 	import { generateTypstCode, typstDownload } from '$lib/typst-generator';
 	import { downloadBlob } from '$lib/browser-download';
 	import { copyResumeText, serializeResumeText } from '$lib/resume-text';
@@ -95,6 +96,7 @@
 	onMount(() => {
 		resumeStore.loadFromStorage();
 		onetStore.loadFromStorage();
+		footerStore.loadFromStorage();
 		customTemplateStores.resume.loadFromStorage();
 		customTemplateStores.cv.loadFromStorage();
 		bibliographyStore.loadFromStorage();
@@ -147,6 +149,7 @@
 		customTemplateStores.resume.clear();
 		customTemplateStores.cv.clear();
 		bibliographyStore.clear();
+		footerStore.reset();
 		resetHighlights();
 		activeTab = 'personal';
 		showCode = false;

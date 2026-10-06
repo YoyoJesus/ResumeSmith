@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { compile } from 'svelte/compiler';
 import { render } from 'svelte/server';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { footerStore } from './footer-store';
 
 const file = fileURLToPath(new URL('./components/AppFooter.svelte', import.meta.url));
 
@@ -43,6 +44,24 @@ describe('footer', () => {
 		expect(text).toMatch(/Typst\s+Layout by\s+TJ Raklovits/);
 		expect(text).toMatch(/Version:\s+Test/);
 		expect(html).toContain('href="https://github.com/YoyoJesus/ResumeSmith"');
+	});
+
+	it('offers a button to hide the footer', () => {
+		expect(html).toMatch(/<button[^>]*>[\s\S]*?Hide footer\s*<\/button>/);
+	});
+
+	it('renders nothing when hidden', async () => {
+		const { default: AppFooter } = await import('./components/AppFooter.svelte');
+		footerStore.toggle();
+		try {
+			expect(
+				render(AppFooter)
+					.body.replace(/<!--.*?-->/g, '')
+					.trim(),
+			).toBe('');
+		} finally {
+			footerStore.reset();
+		}
 	});
 
 	it('opens every link in a new tab without leaking the opener', () => {

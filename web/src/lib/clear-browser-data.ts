@@ -1,9 +1,15 @@
 import { BIBLIOGRAPHY_STORAGE_KEY } from './bibliography-store';
+import { FOOTER_STORAGE_KEY } from './footer-store';
 import { ONET_STORAGE_KEY } from './onet-store';
 import { RESUME_STORAGE_KEY } from './resume-backup';
 import { templateStorageKey } from './template-store';
 
-export const OWNED_LOCAL_STORAGE_KEYS = [RESUME_STORAGE_KEY, ONET_STORAGE_KEY, BIBLIOGRAPHY_STORAGE_KEY] as const;
+export const OWNED_LOCAL_STORAGE_KEYS = [
+	RESUME_STORAGE_KEY,
+	ONET_STORAGE_KEY,
+	BIBLIOGRAPHY_STORAGE_KEY,
+	FOOTER_STORAGE_KEY,
+] as const;
 export const OWNED_SESSION_STORAGE_KEYS = [templateStorageKey('resume'), templateStorageKey('cv')] as const;
 
 export interface StorageRemovalResult {

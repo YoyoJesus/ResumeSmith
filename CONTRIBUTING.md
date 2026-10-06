@@ -63,8 +63,8 @@ package-manager migration.
   resume files stay in the browser.
 - Custom templates are session-scoped, scoped per document type (resume or CV), take precedence over the built-in
   template, and must compile against the complete helper contract before activation.
-- Resume data, the selected O\*NET occupation, and the optional CV BibTeX file may use `localStorage`; custom templates
-  use `sessionStorage`. Do not describe any of them as server-side persistence.
+- Resume data, the selected O\*NET occupation, the optional CV BibTeX file, and the footer's collapsed preference may use
+  `localStorage`; custom templates use `sessionStorage`. Do not describe any of them as server-side persistence.
 - Keep upload limits, environment-variable descriptions, and privacy claims in sync across code, tests, `.env.example`,
   and the root README.
 

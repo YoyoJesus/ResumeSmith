@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { tick } from 'svelte';
 	import { nextMenuIndex } from '$lib/menu-navigation';
+	import { footerStore } from '$lib/footer-store';
 	import { documentTypes, documentTypeLabels, type DocumentType } from '$lib/types';
 
 	let {
@@ -72,6 +73,11 @@
 	function choose(action: () => void) {
 		closeMenu();
 		action();
+	}
+
+	function toggleFooter() {
+		footerStore.toggle();
+		footerStore.saveToStorage();
 	}
 
 	function onMenuButtonKeydown(event: KeyboardEvent) {
@@ -233,6 +239,15 @@
 							)}
 							{@render menuItem('Copy resume text', 'Readable text for application forms', onCopyText)}
 							{@render menuItem('Download .txt', 'The same readable text as a file', onDownloadText)}
+						</div>
+						<div class="my-1 border-t border-gray-200" role="separator"></div>
+						<div role="group" aria-labelledby="header-menu-view">
+							<p id="header-menu-view" class="menu-heading">View</p>
+							{@render menuItem(
+								$footerStore ? 'Show footer' : 'Hide footer',
+								'Credits, version, and O*NET attribution',
+								toggleFooter,
+							)}
 						</div>
 						<div class="my-1 border-t border-gray-200" role="separator"></div>
 						<div role="group" aria-labelledby="header-menu-data">

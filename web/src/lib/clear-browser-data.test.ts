@@ -23,6 +23,7 @@ describe('clearResumeSmithBrowserStorage', () => {
 			resumeData: 'resume',
 			onetSelection: 'occupation',
 			cvBibliography: 'bib',
+			footerCollapsed: 'true',
 		});
 		const session = storage({
 			unrelatedSession: 'keep',
