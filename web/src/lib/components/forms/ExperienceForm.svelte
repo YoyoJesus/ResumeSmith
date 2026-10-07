@@ -3,9 +3,11 @@
 	import { generateId } from '$lib/resume-utils';
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { moveWithHighlights } from '$lib/reorder';
+	import { locationsList } from '$lib/suggestion-state.svelte';
 	import EntryCard from '../EntryCard.svelte';
 	import DateRange from '../DateRange.svelte';
 	import BulletEditor from '../BulletEditor.svelte';
+	import ComboBox from '../ComboBox.svelte';
 
 	let { data }: { data: ResumeData } = $props();
 
@@ -69,13 +71,14 @@
 				</div>
 				<div class="editor-span">
 					<label for={`${uid}-${i}-location`}>Location</label>
-					<input
+					<ComboBox
 						id={`${uid}-${i}-location`}
-						type="text"
 						bind:value={work.location}
+						options={locationsList.items}
 						placeholder="City, State"
-						class:ai-filled={aiFilled.has(`workExperience.${i}.location`)}
+						highlighted={aiFilled.has(`workExperience.${i}.location`)}
 						oninput={() => clearHighlight(`workExperience.${i}.location`)}
+						onfocus={locationsList.ensureLoaded}
 					/>
 				</div>
 				<DateRange

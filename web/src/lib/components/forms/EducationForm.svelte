@@ -4,26 +4,14 @@
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { moveWithHighlights } from '$lib/reorder';
 	import { DEGREES } from '$lib/degrees';
-	import { loadInstitutions } from '$lib/institutions';
+	import { MAJORS } from '$lib/majors';
+	import { institutionsList, locationsList } from '$lib/suggestion-state.svelte';
 	import EntryCard from '../EntryCard.svelte';
 	import DateRange from '../DateRange.svelte';
 	import BulletEditor from '../BulletEditor.svelte';
 	import ComboBox from '../ComboBox.svelte';
 
 	let { data }: { data: ResumeData } = $props();
-
-	let institutions = $state<readonly string[]>([]);
-	let institutionsLoading = false;
-
-	async function ensureInstitutionsLoaded() {
-		if (institutions.length > 0 || institutionsLoading) return;
-		institutionsLoading = true;
-		try {
-			institutions = await loadInstitutions();
-		} finally {
-			institutionsLoading = false;
-		}
-	}
 
 	function addEducation() {
 		data.education = [
@@ -66,22 +54,23 @@
 					<ComboBox
 						id={`${uid}-${i}-institution`}
 						bind:value={edu.institution}
-						options={institutions}
+						options={institutionsList.items}
 						placeholder="University Name"
 						highlighted={aiFilled.has(`education.${i}.institution`)}
 						oninput={() => clearHighlight(`education.${i}.institution`)}
-						onfocus={ensureInstitutionsLoaded}
+						onfocus={institutionsList.ensureLoaded}
 					/>
 				</div>
 				<div>
 					<label for={`${uid}-${i}-location`}>Location</label>
-					<input
+					<ComboBox
 						id={`${uid}-${i}-location`}
-						type="text"
 						bind:value={edu.location}
+						options={locationsList.items}
 						placeholder="City, State"
-						class:ai-filled={aiFilled.has(`education.${i}.location`)}
+						highlighted={aiFilled.has(`education.${i}.location`)}
 						oninput={() => clearHighlight(`education.${i}.location`)}
+						onfocus={locationsList.ensureLoaded}
 					/>
 				</div>
 				<div>
@@ -97,12 +86,12 @@
 				</div>
 				<div>
 					<label for={`${uid}-${i}-major`}>Major</label>
-					<input
+					<ComboBox
 						id={`${uid}-${i}-major`}
-						type="text"
 						bind:value={edu.major}
+						options={MAJORS}
 						placeholder="Computer Science"
-						class:ai-filled={aiFilled.has(`education.${i}.major`)}
+						highlighted={aiFilled.has(`education.${i}.major`)}
 						oninput={() => clearHighlight(`education.${i}.major`)}
 					/>
 				</div>

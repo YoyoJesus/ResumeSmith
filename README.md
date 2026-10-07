@@ -40,7 +40,7 @@ Resume data (including the document type), the selected O\*NET occupation, and a
 
 The Typst compiler downloads its built-in fonts from jsDelivr. Web fonts (Carlito, Lato, Open Sans, Roboto) are downloaded from the Fontsource CDN on jsDelivr only when selected in the Fonts tab.
 
-Institution suggestions come from a static list bundled with the app and derived from the MIT-licensed Hipo university-domains-list. The list is fetched lazily from the app's own origin on focus, and suggestions are filtered entirely in the browser. Nothing the user types in education fields is sent anywhere for suggestions.
+Institution suggestions come from a static list bundled with the app and derived from the MIT-licensed Hipo university-domains-list, and location suggestions come from a static list derived from GeoNames (licensed under CC BY 4.0). The lists are fetched lazily from the app's own origin on focus, and suggestions are filtered entirely in the browser. Nothing the user types in education or location fields is sent anywhere for suggestions.
 
 The deployed site uses Vercel Web Analytics to count anonymous page views. It does not use cookies and does not receive resume content, templates, or uploaded files.
 
