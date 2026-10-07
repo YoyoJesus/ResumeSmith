@@ -13,6 +13,7 @@ export const CV_EXTRACTION_PROMPT = [
 	'Format dates as "YYYY-MM" when a month and year are available; otherwise use "YYYY" or an empty string. Custom section dates are free text, such as "2019 - 2022".',
 	'Set isPresent to true only when the CV says a position or degree is ongoing (e.g. "Present", "Current").',
 	'For linkedin and github, return just the username/handle, not the full URL.',
+	'For education, put only the general degree name in degree (e.g. "Bachelor of Science") and the field of study in major; fill concentration and minor only when the CV names one.',
 	'Put academic and professional appointments in workExperience, honors and awards in achievements, journal articles, conference papers, books, and chapters in publications, and talks and posters in presentations.',
 	'For each publication, copy the author list as written, and split volume, issue, pages, and DOI into their own fields. Use status "in press" or "under review" only when the CV says so; otherwise "published".',
 	'For presentations, use kind "invited" only when the CV says the talk was invited, "poster" for posters, and otherwise "contributed".',
@@ -137,8 +138,11 @@ export function validateExtractedCv(value: unknown): ExtractedCv | null {
 		list(
 			value.education,
 			(item) =>
-				strings(item, ['institution', 'location', 'degree', 'major', 'startDate', 'endDate'], ['isPresent']) &&
-				bulletsOk(item.bullets),
+				strings(
+					item,
+					['institution', 'location', 'degree', 'major', 'concentration', 'minor', 'startDate', 'endDate'],
+					['isPresent'],
+				) && bulletsOk(item.bullets),
 		) &&
 		list(
 			value.workExperience,

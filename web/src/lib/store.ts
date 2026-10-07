@@ -103,7 +103,12 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		fonts: { ...defaults.fonts, ...saved.fonts },
 		fontFamilies: { ...defaults.fontFamilies, ...saved.fontFamilies },
 		clearance: arrays('clearance'),
-		education: arrays('education'),
+		// Education saved before concentration and minor existed leaves them blank.
+		education: arrays('education').map((entry) => ({
+			...entry,
+			concentration: text(entry.concentration),
+			minor: text(entry.minor),
+		})),
 		projects: arrays('projects'),
 		workExperience: arrays('workExperience'),
 		leadership: arrays('leadership'),

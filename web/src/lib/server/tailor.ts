@@ -60,7 +60,7 @@ export function isValidTailorResume(value: unknown): value is ResumeData {
 		entries(value.clearance, ['id', 'level', 'status', 'dateGranted']) &&
 		entries(
 			value.education,
-			['id', 'institution', 'location', 'degree', 'major', 'startDate', 'endDate'],
+			['id', 'institution', 'location', 'degree', 'major', 'concentration', 'minor', 'startDate', 'endDate'],
 			['isPresent'],
 			true,
 		) &&
@@ -223,7 +223,9 @@ export function buildTailorInput(
 		lines.push(
 			'',
 			'=== Education ===',
-			...resume.education.map((e) => `- ${[e.degree, e.major, e.institution].filter(Boolean).join(', ')}`),
+			...resume.education.map(
+				(e) => `- ${[e.degree, e.major, e.concentration, e.minor, e.institution].filter(Boolean).join(', ')}`,
+			),
 		);
 	}
 

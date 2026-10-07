@@ -33,6 +33,8 @@ describe('plain-text resume export', () => {
 			location: 'CH',
 			degree: 'BSc',
 			major: 'CS',
+			concentration: '',
+			minor: '',
 			startDate: '2018',
 			endDate: '2022-06',
 			isPresent: false,

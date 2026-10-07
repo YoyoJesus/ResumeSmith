@@ -38,6 +38,8 @@ export interface Education {
 	location: string;
 	degree: string;
 	major: string;
+	concentration: string;
+	minor: string;
 	startDate: string;
 	endDate: string;
 	isPresent: boolean;

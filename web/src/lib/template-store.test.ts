@@ -18,7 +18,7 @@ const VALID_TEMPLATE = `
 #let resume(author-name: "", email: "", phone: "", website: "", linkedin-user-id: "", github-username: "", body) = body
 #let work-heading(title, company, location, start-date, end-date, body) = body
 #let project-heading(name, stack: "", project-url: "", award: "", body) = body
-#let education-heading(institution, location, degree, major, start-date, end-date, body) = body
+#let education-heading(institution, location, degree, major, start-date, end-date, concentration: "", minor: "", body) = body
 #let achievement-heading(title, date, body) = body
 #let skills(body) = body
 // ========== RESUME CONTENT ==========

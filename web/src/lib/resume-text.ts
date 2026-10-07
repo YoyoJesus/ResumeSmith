@@ -46,7 +46,13 @@ function sectionLines(data: ResumeData, key: SectionKey): string[] {
 				data.education.map((item) =>
 					[
 						details(item.institution, item.location),
-						details(item.degree, item.major, period(item.startDate, item.endDate, item.isPresent)),
+						details(
+							item.degree,
+							item.major,
+							item.concentration,
+							item.minor,
+							period(item.startDate, item.endDate, item.isPresent),
+						),
 						...bullets(item.bullets),
 					].filter(Boolean),
 				),

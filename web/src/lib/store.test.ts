@@ -136,6 +136,12 @@ describe('mergeWithDefaults', () => {
 		expect(merged.sectionOrder).toContain('clearance');
 	});
 
+	it('blanks the concentration and minor of education saved before they existed', () => {
+		const legacy = { id: 'e1', institution: 'Example University', degree: 'Bachelor of Science', major: 'Biology' };
+		const merged = mergeWithDefaults({ education: [legacy as never] });
+		expect(merged.education[0]).toMatchObject({ ...legacy, concentration: '', minor: '' });
+	});
+
 	it('returns fresh nested defaults rather than shared mutable objects', () => {
 		const first = mergeWithDefaults({});
 		first.personalInfo.name = 'Changed';

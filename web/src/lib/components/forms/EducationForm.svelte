@@ -22,6 +22,8 @@
 				location: '',
 				degree: '',
 				major: '',
+				concentration: '',
+				minor: '',
 				startDate: '',
 				endDate: '',
 				isPresent: false,
@@ -93,6 +95,28 @@
 						placeholder="Computer Science"
 						highlighted={aiFilled.has(`education.${i}.major`)}
 						oninput={() => clearHighlight(`education.${i}.major`)}
+					/>
+				</div>
+				<div>
+					<label for={`${uid}-${i}-concentration`}>Concentration (optional)</label>
+					<input
+						id={`${uid}-${i}-concentration`}
+						type="text"
+						bind:value={edu.concentration}
+						placeholder="Artificial Intelligence"
+						class:ai-filled={aiFilled.has(`education.${i}.concentration`)}
+						oninput={() => clearHighlight(`education.${i}.concentration`)}
+					/>
+				</div>
+				<div>
+					<label for={`${uid}-${i}-minor`}>Minor (optional)</label>
+					<ComboBox
+						id={`${uid}-${i}-minor`}
+						bind:value={edu.minor}
+						options={MAJORS}
+						placeholder="Mathematics"
+						highlighted={aiFilled.has(`education.${i}.minor`)}
+						oninput={() => clearHighlight(`education.${i}.minor`)}
 					/>
 				</div>
 				<DateRange

@@ -117,13 +117,13 @@
   }
 }
 
-#let education-heading(institution, location, degree, major, start-date, end-date, body) = {
+#let education-heading(institution, location, degree, major, start-date, end-date, concentration: "", minor: "", body) = {
   grid(
     columns: (1fr, auto),
     column-gutter: 1em,
     text(weight: 700, fill: accent)[#institution],
     text(weight: 600)[#period-worked(start-date, end-date)],
-    text(fill: muted)[#degree#if degree != "" and major != "" { [, ] }#major],
+    text(fill: muted)[#(degree, major, if concentration != "" { "Concentration in " + concentration } else { "" }, if minor != "" { "Minor in " + minor } else { "" }).filter(detail => detail != "").join(", ")],
     text(fill: muted)[#location],
   )
   if body != [] {

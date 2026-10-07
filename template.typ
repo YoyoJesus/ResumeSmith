@@ -226,19 +226,17 @@
   }
 }
 
-#let education-heading(institution, location, degree, major, start-date, end-date, body) = {
+#let education-heading(institution, location, degree, major, start-date, end-date, concentration: "", minor: "", body) = {
   assert.eq(type(start-date), datetime)
   assert(type(end-date) == datetime or type(end-date) == str)
 
-  let degree-line = if degree != "" and major != "" {
-    [#degree, #major]
-  } else if degree != "" {
-    [#degree]
-  } else if major != "" {
-    [#major]
-  } else {
-    []
-  }
+  let details = (
+    degree,
+    major,
+    if concentration != "" { "Concentration in " + concentration } else { "" },
+    if minor != "" { "Minor in " + minor } else { "" },
+  ).filter(detail => detail != "")
+  let degree-line = if details.len() > 0 { [#details.join(", ")] } else { [] }
   generic_2x2(
     (70%, 30%),
     [#bold(institution)], [#bold(location)],

@@ -160,6 +160,8 @@ describe('buildTailorInput', () => {
 				location: '',
 				degree: 'BS',
 				major: '',
+				concentration: '',
+				minor: '',
 				startDate: '',
 				endDate: '',
 				isPresent: false,

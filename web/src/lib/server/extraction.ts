@@ -64,6 +64,7 @@ export const EXTRACTION_PROMPT = [
 	'Format dates as "YYYY-MM" when a month and year are available; otherwise use "YYYY" or an empty string.',
 	'Set isPresent to true only when the resume says a role/study is ongoing (e.g. "Present", "Current").',
 	'For linkedin and github, return just the username/handle, not the full URL.',
+	'For education, put only the general degree name in degree (e.g. "Bachelor of Science") and the field of study in major; fill concentration and minor only when the resume names one.',
 	'Do not invent, guess, or derive any value that is not explicitly present in the resume, especially contact details and profile URLs.',
 	'You may organize explicitly stated facts into the most appropriate section, but do not add new facts while doing so.',
 ].join(' ');
@@ -112,12 +113,25 @@ export const RESUME_SCHEMA = {
 			items: {
 				type: 'object',
 				additionalProperties: false,
-				required: ['institution', 'location', 'degree', 'major', 'startDate', 'endDate', 'isPresent', 'bullets'],
+				required: [
+					'institution',
+					'location',
+					'degree',
+					'major',
+					'concentration',
+					'minor',
+					'startDate',
+					'endDate',
+					'isPresent',
+					'bullets',
+				],
 				properties: {
 					institution: { type: 'string' },
 					location: { type: 'string' },
 					degree: { type: 'string' },
 					major: { type: 'string' },
+					concentration: { type: 'string' },
+					minor: { type: 'string' },
 					startDate: { type: 'string' },
 					endDate: { type: 'string' },
 					isPresent: { type: 'boolean' },
@@ -266,7 +280,7 @@ export function validateExtractedResume(value: unknown): ExtractedResume | null 
 		!hasFields(value.profile, ['summary']) ||
 		!hasEntries(
 			value.education,
-			['institution', 'location', 'degree', 'major', 'startDate', 'endDate'],
+			['institution', 'location', 'degree', 'major', 'concentration', 'minor', 'startDate', 'endDate'],
 			['isPresent'],
 			true,
 		) ||

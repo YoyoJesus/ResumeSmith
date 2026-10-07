@@ -83,7 +83,9 @@ function generateEducation(edu: Education): string {
   "${typstString(edu.degree)}",
   "${typstString(edu.major)}",
   ${formatDate(edu.startDate)},
-  ${endDate}
+  ${endDate},
+  concentration: "${typstString(edu.concentration)}",
+  minor: "${typstString(edu.minor)}"
 )[
 ${bullets}
 ]`;
@@ -553,16 +555,14 @@ ${resumeFunction(documentType)}
   }
 }
 
-#let education-heading(institution, location, degree, major, start-date, end-date, body) = {
-  let degree-line = if degree != "" and major != "" {
-    [#degree, #major]
-  } else if degree != "" {
-    [#degree]
-  } else if major != "" {
-    [#major]
-  } else {
-    []
-  }
+#let education-heading(institution, location, degree, major, start-date, end-date, concentration: "", minor: "", body) = {
+  let details = (
+    degree,
+    major,
+    if concentration != "" { "Concentration in " + concentration } else { "" },
+    if minor != "" { "Minor in " + minor } else { "" },
+  ).filter(detail => detail != "")
+  let degree-line = if details.len() > 0 { [#details.join(", ")] } else { [] }
   generic_2x2(
     (70%, 30%),
     [#bold(institution)], [#bold(location)],

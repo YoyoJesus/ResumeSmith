@@ -45,6 +45,8 @@ const RESUME_CONTRACT_FIXTURE: ResumeData = {
 			location: 'Example City',
 			degree: 'Bachelor of Science',
 			major: 'Computer Science',
+			concentration: 'Software Engineering',
+			minor: 'Mathematics',
 			startDate: '2020-08',
 			endDate: '2024-05',
 			isPresent: false,

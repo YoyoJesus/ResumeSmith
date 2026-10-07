@@ -90,7 +90,24 @@ function validateResume(value: unknown): asserts value is ResumeData {
 				dateGranted: date,
 			}),
 		),
-		education: arrayOf(shape({ id, institution: string, location: string, degree: string, major: string, ...dated })),
+		education: arrayOf((value, path) => {
+			// Backups written before concentration and minor existed omit them; restore those as blank.
+			if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+				const entry = value as Record<string, unknown>;
+				entry.concentration ??= '';
+				entry.minor ??= '';
+			}
+			shape({
+				id,
+				institution: string,
+				location: string,
+				degree: string,
+				major: string,
+				concentration: string,
+				minor: string,
+				...dated,
+			})(value, path);
+		}),
 		projects: arrayOf(shape({ id, name: string, stack: string, url: string, award: string, bullets })),
 		workExperience: arrayOf(shape({ id, title: string, company: string, location: string, ...dated })),
 		leadership: arrayOf(shape({ id, title: string, organization: string, location: string, ...dated })),

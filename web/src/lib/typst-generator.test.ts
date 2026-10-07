@@ -36,6 +36,8 @@ describe('generateTypstCode clearance section', () => {
 				location: '',
 				degree: '',
 				major: '',
+				concentration: '',
+				minor: '',
 				startDate: '',
 				endDate: '',
 				isPresent: false,
@@ -44,6 +46,28 @@ describe('generateTypstCode clearance section', () => {
 		];
 		const code = generateTypstCode(data);
 		expect(code.indexOf('= Clearance')).toBeLessThan(code.indexOf('= Education'));
+	});
+
+	it('passes the concentration and minor to the education heading', () => {
+		const data = baseData([]);
+		data.education = [
+			{
+				id: 'e1',
+				institution: 'Example University',
+				location: '',
+				degree: 'Bachelor of Science',
+				major: 'Computer Science',
+				concentration: 'Machine "Learning"',
+				minor: 'Mathematics',
+				startDate: '',
+				endDate: '',
+				isPresent: false,
+				bullets: [],
+			},
+		];
+		const code = generateTypstCode(data);
+		expect(code).toContain('concentration: "Machine \\"Learning\\""');
+		expect(code).toContain('minor: "Mathematics"');
 	});
 });
 

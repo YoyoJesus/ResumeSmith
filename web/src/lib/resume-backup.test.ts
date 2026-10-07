@@ -33,6 +33,8 @@ function filledResume(): ResumeData {
 			location: 'Example City',
 			degree: 'BS',
 			major: 'Computer Science',
+			concentration: '',
+			minor: '',
 			startDate: '2017',
 			endDate: '2021-05',
 			isPresent: false,
@@ -134,6 +136,14 @@ describe('editable resume backup', () => {
 		const restored = parseBackup(text);
 		expect(restored).toEqual({ format: 'resumesmith-backup', version: BACKUP_VERSION, resume, occupation });
 		expect(text).not.toContain('customTemplate');
+	});
+
+	it('restores a backup written before concentration and minor existed', () => {
+		const legacy = JSON.parse(createBackup(filledResume(), occupation));
+		delete legacy.resume.education[0].concentration;
+		delete legacy.resume.education[0].minor;
+		const restored = parseBackup(JSON.stringify(legacy));
+		expect(restored.resume.education[0]).toMatchObject({ concentration: '', minor: '' });
 	});
 
 	it('rejects unsupported versions, missing or extra nested fields, invalid values and duplicate IDs', () => {

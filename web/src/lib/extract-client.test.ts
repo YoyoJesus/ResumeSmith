@@ -20,6 +20,8 @@ const sample: ExtractedResume = {
 			location: 'London',
 			degree: 'BSc',
 			major: 'Math',
+			concentration: '',
+			minor: '',
 			startDate: '1830-01',
 			endDate: '1834-01',
 			isPresent: false,
