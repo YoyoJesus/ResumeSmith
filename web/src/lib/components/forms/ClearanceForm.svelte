@@ -4,6 +4,7 @@
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { moveWithHighlights } from '$lib/reorder';
 	import EntryCard from '../EntryCard.svelte';
+	import MonthField from '../MonthField.svelte';
 
 	let { data }: { data: ResumeData } = $props();
 
@@ -61,11 +62,11 @@
 				</div>
 				<div>
 					<label for={`${uid}-${i}-date-granted`}>Date Granted</label>
-					<input
+					<MonthField
 						id={`${uid}-${i}-date-granted`}
-						type="month"
+						label="Date Granted"
 						bind:value={clearance.dateGranted}
-						class:ai-filled={aiFilled.has(`clearance.${i}.dateGranted`)}
+						highlighted={aiFilled.has(`clearance.${i}.dateGranted`)}
 						oninput={() => clearHighlight(`clearance.${i}.dateGranted`)}
 					/>
 				</div>

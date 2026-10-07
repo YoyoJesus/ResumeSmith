@@ -13,6 +13,7 @@
 	import { bibliographyStore, validateBibliography } from '$lib/bibliography-store';
 	import { moveWithHighlights } from '$lib/reorder';
 	import EntryCard from '../EntryCard.svelte';
+	import MonthField from '../MonthField.svelte';
 
 	let { data }: { data: ResumeData } = $props();
 
@@ -178,11 +179,12 @@
 					/>
 				</div>
 				<div>
-					<label for="{id}-date">Date</label><input
+					<label for="{id}-date">Date</label>
+					<MonthField
 						id="{id}-date"
-						type="month"
+						label="Date"
 						bind:value={publication.date}
-						class:ai-filled={aiFilled.has(`publications.${i}.date`)}
+						highlighted={aiFilled.has(`publications.${i}.date`)}
 						oninput={() => clearHighlight(`publications.${i}.date`)}
 					/>
 				</div>

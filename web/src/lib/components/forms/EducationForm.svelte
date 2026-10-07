@@ -3,11 +3,27 @@
 	import { generateId } from '$lib/resume-utils';
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { moveWithHighlights } from '$lib/reorder';
+	import { DEGREES } from '$lib/degrees';
+	import { loadInstitutions } from '$lib/institutions';
 	import EntryCard from '../EntryCard.svelte';
 	import DateRange from '../DateRange.svelte';
 	import BulletEditor from '../BulletEditor.svelte';
+	import ComboBox from '../ComboBox.svelte';
 
 	let { data }: { data: ResumeData } = $props();
+
+	let institutions = $state<readonly string[]>([]);
+	let institutionsLoading = false;
+
+	async function ensureInstitutionsLoaded() {
+		if (institutions.length > 0 || institutionsLoading) return;
+		institutionsLoading = true;
+		try {
+			institutions = await loadInstitutions();
+		} finally {
+			institutionsLoading = false;
+		}
+	}
 
 	function addEducation() {
 		data.education = [
@@ -47,13 +63,14 @@
 			<div class="editor-grid">
 				<div>
 					<label for={`${uid}-${i}-institution`}>Institution</label>
-					<input
+					<ComboBox
 						id={`${uid}-${i}-institution`}
-						type="text"
 						bind:value={edu.institution}
+						options={institutions}
 						placeholder="University Name"
-						class:ai-filled={aiFilled.has(`education.${i}.institution`)}
+						highlighted={aiFilled.has(`education.${i}.institution`)}
 						oninput={() => clearHighlight(`education.${i}.institution`)}
+						onfocus={ensureInstitutionsLoaded}
 					/>
 				</div>
 				<div>
@@ -69,12 +86,12 @@
 				</div>
 				<div>
 					<label for={`${uid}-${i}-degree`}>Degree</label>
-					<input
+					<ComboBox
 						id={`${uid}-${i}-degree`}
-						type="text"
 						bind:value={edu.degree}
-						placeholder="Bachelor of Sciences"
-						class:ai-filled={aiFilled.has(`education.${i}.degree`)}
+						options={DEGREES}
+						placeholder="Bachelor of Science"
+						highlighted={aiFilled.has(`education.${i}.degree`)}
 						oninput={() => clearHighlight(`education.${i}.degree`)}
 					/>
 				</div>

@@ -10,13 +10,15 @@ const formFiles = readdirSync(resolve(components, 'forms'))
 	.map((file) => resolve(components, 'forms', file));
 
 describe('form labels', () => {
-	it.each([...formFiles, resolve(components, 'DateRange.svelte'), resolve(components, 'BulletEditor.svelte')])(
-		'has no unassociated labels in %s',
-		(file) => {
-			const result = compile(readFileSync(file, 'utf8'), { filename: file, generate: false });
-			expect(result.warnings.filter((warning) => warning.code === 'a11y_label_has_associated_control')).toEqual([]);
-		},
-	);
+	it.each([
+		...formFiles,
+		resolve(components, 'DateRange.svelte'),
+		resolve(components, 'BulletEditor.svelte'),
+		resolve(components, 'MonthField.svelte'),
+	])('has no unassociated labels in %s', (file) => {
+		const result = compile(readFileSync(file, 'utf8'), { filename: file, generate: false });
+		expect(result.warnings.filter((warning) => warning.code === 'a11y_label_has_associated_control')).toEqual([]);
+	});
 });
 
 describe('header', () => {

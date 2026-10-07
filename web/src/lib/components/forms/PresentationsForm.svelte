@@ -5,6 +5,7 @@
 	import { presentationKinds, presentationKindLabels } from '$lib/presentation';
 	import { moveWithHighlights } from '$lib/reorder';
 	import EntryCard from '../EntryCard.svelte';
+	import MonthField from '../MonthField.svelte';
 
 	let { data }: { data: ResumeData } = $props();
 
@@ -67,11 +68,12 @@
 					/>
 				</div>
 				<div>
-					<label for="{id}-date">Date</label><input
+					<label for="{id}-date">Date</label>
+					<MonthField
 						id="{id}-date"
-						type="month"
+						label="Date"
 						bind:value={presentation.date}
-						class:ai-filled={aiFilled.has(`${path}.date`)}
+						highlighted={aiFilled.has(`${path}.date`)}
 						oninput={() => clearHighlight(`${path}.date`)}
 					/>
 				</div>
