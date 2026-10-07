@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
+	import MonthField from './MonthField.svelte';
 
 	let {
 		startDate = $bindable(),
@@ -21,22 +22,22 @@
 
 <div>
 	<label for={`${uid}-start-date`}>Start Date</label>
-	<input
+	<MonthField
 		id={`${uid}-start-date`}
-		type="month"
+		label="Start Date"
 		bind:value={startDate}
-		class:ai-filled={aiFilled.has(`${path}.startDate`)}
+		highlighted={aiFilled.has(`${path}.startDate`)}
 		oninput={() => clearHighlight(`${path}.startDate`)}
 	/>
 </div>
 <div>
 	<label for={`${uid}-end-date`}>{endLabel}</label>
-	<input
+	<MonthField
 		id={`${uid}-end-date`}
-		type="month"
+		label={endLabel}
 		bind:value={endDate}
 		disabled={isPresent}
-		class:ai-filled={aiFilled.has(`${path}.endDate`)}
+		highlighted={aiFilled.has(`${path}.endDate`)}
 		oninput={() => clearHighlight(`${path}.endDate`)}
 	/>
 	<label class="present">

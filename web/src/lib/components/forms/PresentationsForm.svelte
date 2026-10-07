@@ -4,7 +4,10 @@
 	import { aiFilled, clearHighlight } from '$lib/ai-highlight';
 	import { presentationKinds, presentationKindLabels } from '$lib/presentation';
 	import { moveWithHighlights } from '$lib/reorder';
+	import { locationsList } from '$lib/suggestion-state.svelte';
 	import EntryCard from '../EntryCard.svelte';
+	import MonthField from '../MonthField.svelte';
+	import ComboBox from '../ComboBox.svelte';
 
 	let { data }: { data: ResumeData } = $props();
 
@@ -57,21 +60,24 @@
 					/>
 				</div>
 				<div>
-					<label for="{id}-location">Location</label><input
+					<label for="{id}-location">Location</label>
+					<ComboBox
 						id="{id}-location"
-						type="text"
 						bind:value={presentation.location}
+						options={locationsList.items}
 						placeholder="Example City"
-						class:ai-filled={aiFilled.has(`${path}.location`)}
+						highlighted={aiFilled.has(`${path}.location`)}
 						oninput={() => clearHighlight(`${path}.location`)}
+						onfocus={locationsList.ensureLoaded}
 					/>
 				</div>
 				<div>
-					<label for="{id}-date">Date</label><input
+					<label for="{id}-date">Date</label>
+					<MonthField
 						id="{id}-date"
-						type="month"
+						label="Date"
 						bind:value={presentation.date}
-						class:ai-filled={aiFilled.has(`${path}.date`)}
+						highlighted={aiFilled.has(`${path}.date`)}
 						oninput={() => clearHighlight(`${path}.date`)}
 					/>
 				</div>
