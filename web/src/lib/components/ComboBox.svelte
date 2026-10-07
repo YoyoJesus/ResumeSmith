@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createOptionIndex } from '$lib/combo-filter';
+	import { filterOptions } from '$lib/combo-filter';
 
 	interface ComboBoxProps {
 		value?: string;
@@ -24,8 +24,7 @@
 	let isOpen = $state(false);
 	let activeIndex = $state(-1);
 
-	const search = $derived(createOptionIndex(options));
-	const suggestions = $derived(search(value ?? '', 8));
+	const suggestions = $derived(filterOptions(options, value ?? '', 8));
 	const exactOnly = $derived(suggestions.length === 1 && suggestions[0].trim() === (value ?? '').trim());
 	const canOpen = $derived(suggestions.length > 0 && !exactOnly);
 	const isExpanded = $derived(isOpen && canOpen);
