@@ -302,7 +302,10 @@ export function buildTailorInput(
 		...scaleLines('Knowledge', occupation.knowledge),
 		...scaleLines('Abilities', occupation.abilities),
 	);
-	const terms = options.keywords ? occupationTerms(occupation) : [];
+	const visibleText = options.keywords ? serializeResumeText(resume).toLowerCase() : '';
+	const terms = options.keywords
+		? occupationTerms(occupation).filter((term) => !visibleText.includes(term.toLowerCase()))
+		: [];
 	if (options.keywords) {
 		lines.push(
 			'',
