@@ -130,6 +130,25 @@ function storage(initial: Record<string, string> = {}) {
 }
 
 describe('editable resume backup', () => {
+	it('restores a backup written before hidden keywords existed', () => {
+		const legacy = JSON.parse(createBackup(filledResume(), occupation));
+		delete legacy.resume.hiddenKeywords;
+		const restored = parseBackup(JSON.stringify(legacy));
+		expect(restored.resume.hiddenKeywords).toEqual({ enabled: false, keywords: [] });
+	});
+
+	it('round-trips hidden keywords', () => {
+		const resume = filledResume();
+		resume.hiddenKeywords = { enabled: true, keywords: ['Splunk'] };
+		expect(parseBackup(createBackup(resume, occupation)).resume.hiddenKeywords).toEqual(resume.hiddenKeywords);
+	});
+
+	it('rejects invalid hidden keyword settings', () => {
+		const backup = JSON.parse(createBackup(filledResume(), occupation));
+		backup.resume.hiddenKeywords = { enabled: 'no', keywords: [] };
+		expect(() => parseBackup(JSON.stringify(backup))).toThrow('Invalid backup: resume.hiddenKeywords.enabled.');
+	});
+
 	it('round-trips every field, section order, date precision, fonts, colors, and occupation without templates', () => {
 		const resume = filledResume();
 		const text = createBackup(resume, occupation);

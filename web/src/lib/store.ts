@@ -9,6 +9,7 @@ import type {
 	SectionKey,
 } from './types';
 import { isPresentationKind } from './presentation';
+import { normalizeHiddenKeywords } from './hidden-keywords';
 import { isPublicationStatus } from './publication';
 import { generateId } from './resume-utils';
 import { customSectionKey, defaultResumeData, defaultSectionOrder, documentTypes } from './types';
@@ -118,6 +119,7 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		publicationAuthorName: text(saved.publicationAuthorName),
 		presentations: normalizePresentations(saved.presentations),
 		customSections,
+		hiddenKeywords: normalizeHiddenKeywords(saved.hiddenKeywords),
 		sectionOrder,
 	};
 }

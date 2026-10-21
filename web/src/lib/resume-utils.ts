@@ -78,6 +78,7 @@ export function buildResumeFromExtraction(ex: ExtractedResume): ResumeData {
 		publicationAuthorName: '',
 		presentations: [],
 		customSections: [],
+		hiddenKeywords: { enabled: false, keywords: [] },
 		clearance: withId(ex.clearance ?? []),
 		colors: { ...defaultResumeData.colors },
 		fonts: { ...defaultFontSettings },

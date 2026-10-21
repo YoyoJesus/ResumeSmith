@@ -62,6 +62,10 @@ const shape =
 		record(value, fields, path);
 
 function validateResume(value: unknown): asserts value is ResumeData {
+	if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+		const resume = value as Record<string, unknown>;
+		if (!Object.hasOwn(resume, 'hiddenKeywords')) resume.hiddenKeywords = { enabled: false, keywords: [] };
+	}
 	const ids = new Set<string>();
 	const id: Validator = (value, path) => {
 		nonempty(value, path);
@@ -143,6 +147,7 @@ function validateResume(value: unknown): asserts value is ResumeData {
 		customSections: arrayOf(
 			shape({ id, heading: string, entries: arrayOf(shape({ id, title: string, date: string, bullets })) }),
 		),
+		hiddenKeywords: shape({ enabled: boolean, keywords: arrayOf(string) }),
 		colors: shape({ headColor: color, textColor: color, accentColor: color, linkColor: color }),
 		fonts: shape(
 			Object.fromEntries(
