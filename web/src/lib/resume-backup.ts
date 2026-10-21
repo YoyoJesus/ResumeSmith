@@ -1,4 +1,5 @@
 import { FONT_OPTIONS, FONT_SIZE_BOUNDS } from './fonts';
+import { normalizeHiddenKeywords } from './hidden-keywords';
 import { ONET_STORAGE_KEY } from './onet-store';
 import type { OnetOccupationRef } from './onet-types';
 import { defaultSectionOrder, documentTypes, type ResumeData, type SectionKey } from './types';
@@ -223,6 +224,7 @@ export function parseBackup(text: string): ResumeBackup {
 		throw new Error('Backup is not valid JSON.');
 	}
 	validateBackup(parsed);
+	parsed.resume.hiddenKeywords = normalizeHiddenKeywords(parsed.resume.hiddenKeywords);
 	return parsed;
 }
 

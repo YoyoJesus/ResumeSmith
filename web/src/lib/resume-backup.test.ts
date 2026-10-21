@@ -143,10 +143,28 @@ describe('editable resume backup', () => {
 		expect(parseBackup(createBackup(resume, occupation)).resume.hiddenKeywords).toEqual(resume.hiddenKeywords);
 	});
 
+	it('normalizes duplicate, padded, overlong, and over-cap keywords before restoring and persisting', () => {
+		const backup = JSON.parse(createBackup(filledResume(), occupation));
+		backup.resume.hiddenKeywords = {
+			enabled: true,
+			keywords: [' SQL ', 'sql', 'x'.repeat(81), ...Array.from({ length: 34 }, (_, i) => `term ${i}`)],
+		};
+		const restored = parseBackup(JSON.stringify(backup));
+		expect(restored.resume.hiddenKeywords).toEqual({
+			enabled: true,
+			keywords: ['SQL', ...Array.from({ length: 29 }, (_, i) => `term ${i}`)],
+		});
+		const store = storage();
+		persistBackup(restored, store);
+		expect(JSON.parse(store.getItem('resumeData')!).hiddenKeywords).toEqual(restored.resume.hiddenKeywords);
+	});
+
 	it('rejects invalid hidden keyword settings', () => {
 		const backup = JSON.parse(createBackup(filledResume(), occupation));
 		backup.resume.hiddenKeywords = { enabled: 'no', keywords: [] };
 		expect(() => parseBackup(JSON.stringify(backup))).toThrow('Invalid backup: resume.hiddenKeywords.enabled.');
+		backup.resume.hiddenKeywords = { enabled: true, keywords: ['SQL', 3] };
+		expect(() => parseBackup(JSON.stringify(backup))).toThrow('Invalid backup: resume.hiddenKeywords.keywords[1].');
 	});
 
 	it('round-trips every field, section order, date precision, fonts, colors, and occupation without templates', () => {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { addHiddenKeywords, normalizeHiddenKeywords, withoutHiddenKeywords } from './hidden-keywords';
+import {
+	addHiddenKeywords,
+	normalizeHiddenKeywords,
+	tryAddHiddenKeyword,
+	withoutHiddenKeywords,
+} from './hidden-keywords';
 import { defaultResumeData } from './types';
 
 describe('hidden keywords', () => {
@@ -14,6 +19,23 @@ describe('hidden keywords', () => {
 		);
 		expect(keywords).toHaveLength(30);
 		expect(keywords.at(-1)).toBe('a');
+	});
+
+	it('reports why a manual entry was rejected and preserves the current list', () => {
+		const full = Array.from({ length: 30 }, (_, i) => `term ${i}`);
+		expect(tryAddHiddenKeyword(['SQL'], 'x'.repeat(81))).toEqual({
+			keywords: ['SQL'],
+			error: 'Keywords must be 80 characters or fewer.',
+		});
+		expect(tryAddHiddenKeyword(full, 'new term')).toEqual({
+			keywords: full,
+			error: 'You can add up to 30 hidden keywords.',
+		});
+		expect(tryAddHiddenKeyword(['SQL'], ' sql ')).toEqual({
+			keywords: ['SQL'],
+			error: 'That keyword is already in the list.',
+		});
+		expect(tryAddHiddenKeyword(['SQL'], ' Python ')).toEqual({ keywords: ['SQL', 'Python'], error: '' });
 	});
 
 	it('uses defaults for non-objects', () => {

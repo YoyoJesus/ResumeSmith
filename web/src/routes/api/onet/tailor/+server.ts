@@ -44,8 +44,8 @@ export const POST: RequestHandler = async ({ request }) => {
 
 	const code = typeof body.code === 'string' ? body.code : '';
 	if (!isValidOnetCode(code)) return onetFail(onetError('invalid_code'));
-	if (!isValidTailorResume(body.resume)) return onetFail(onetError('invalid_request'));
 	const keywords = body.keywords === true;
+	if (!isValidTailorResume(body.resume, keywords)) return onetFail(onetError('invalid_request'));
 
 	const key = onetKey();
 	if (!key) return onetFail(onetError('auth'));
@@ -61,7 +61,13 @@ export const POST: RequestHandler = async ({ request }) => {
 	}
 
 	// allowed.fields always carries the four font controls, so it cannot answer this on its own.
-	const { prompt, hasTargets, allowed } = buildTailorInput(body.resume, occupation, body.pageCount, { keywords });
+	let input: ReturnType<typeof buildTailorInput>;
+	try {
+		input = buildTailorInput(body.resume, occupation, body.pageCount, { keywords });
+	} catch {
+		return onetFail(onetError('invalid_request'));
+	}
+	const { prompt, hasTargets, allowed } = input;
 	if (!hasTargets) return json({ edits: [], reason: 'no_targets' });
 
 	try {

@@ -215,6 +215,7 @@ describe('buildTailorInput', () => {
 		expect(allowed.keywords?.get('splunk')).toBe('Splunk');
 		expect(allowed.visibleText).toContain('python');
 		expect(prompt).toContain('targetId MUST be "keywords" and bulletIndex MUST be -1. Return at most 30.');
+		expect(prompt).toContain('The 12-edit limit applies to non-keyword edits; up to 30 keyword edits are additional.');
 	});
 
 	function resume(): ResumeData {
@@ -356,6 +357,38 @@ describe('isValidCompiledPageCount', () => {
 });
 
 describe('isValidTailorResume', () => {
+	it.each([
+		['missing presentations', (resume: Record<string, unknown>) => delete resume.presentations],
+		['malformed presentations', (resume: Record<string, unknown>) => (resume.presentations = [{}])],
+		['missing custom sections', (resume: Record<string, unknown>) => delete resume.customSections],
+		[
+			'malformed custom sections',
+			(resume: Record<string, unknown>) => (resume.customSections = [{ id: 's', heading: 'Service', entries: [{}] }]),
+		],
+		[
+			'malformed publication extensions',
+			(resume: Record<string, unknown>) =>
+				(resume.publications = [
+					{
+						id: 'p',
+						title: 'Paper',
+						authors: '',
+						venue: '',
+						date: '',
+						url: '',
+						status: 3,
+						volume: '',
+						issue: '',
+						pages: '',
+						doi: '',
+					},
+				]),
+		],
+	])('rejects %s for keyword evidence serialization', (_label, change) => {
+		const resume = structuredClone(defaultResumeData) as unknown as Record<string, unknown>;
+		change(resume);
+		expect(isValidTailorResume(resume, true)).toBe(false);
+	});
 	it('accepts the complete application resume shape', () => {
 		expect(isValidTailorResume(structuredClone(defaultResumeData))).toBe(true);
 		const withoutKeywords = structuredClone(defaultResumeData) as unknown as Record<string, unknown>;

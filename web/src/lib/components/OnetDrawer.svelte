@@ -7,7 +7,7 @@
 	import type { ResumeData } from '$lib/types';
 	import { appendBullet, appendSkill, appendSkillToNewCategory, bulletTargets, skillTargets } from '$lib/onet-insert';
 	import { applyTailorEdits } from '$lib/onet-apply';
-	import { addHiddenKeywords, MAX_HIDDEN_KEYWORDS, withoutHiddenKeywords } from '$lib/hidden-keywords';
+	import { MAX_HIDDEN_KEYWORDS, tryAddHiddenKeyword, withoutHiddenKeywords } from '$lib/hidden-keywords';
 	import { aiFilled } from '$lib/ai-highlight';
 	import { createOnetSearch } from '$lib/onet-search';
 	import OnetInsertMenu from './OnetInsertMenu.svelte';
@@ -33,6 +33,7 @@
 	let tailorError = $state('');
 	let tailorNote = $state('');
 	let keywordInput = $state('');
+	let keywordError = $state('');
 	let tailorController: AbortController | null = null;
 	let tailorRequest = 0;
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -167,7 +168,9 @@
 	}
 
 	function addManualKeyword() {
-		const keywords = addHiddenKeywords(data.hiddenKeywords.keywords, [keywordInput]);
+		const { keywords, error } = tryAddHiddenKeyword(data.hiddenKeywords.keywords, keywordInput);
+		keywordError = error;
+		if (error) return;
 		data = { ...data, hiddenKeywords: { ...data.hiddenKeywords, keywords } };
 		keywordInput = '';
 	}
@@ -424,6 +427,7 @@
 							id="hidden-keyword-input"
 							type="text"
 							bind:value={keywordInput}
+							oninput={() => (keywordError = '')}
 							onkeydown={(event) => {
 								if (event.key === 'Enter') {
 									event.preventDefault();
@@ -431,6 +435,9 @@
 								}
 							}}
 						/>
+						{#if keywordError}
+							<p class="mt-1 text-xs text-red-700" role="alert">{keywordError}</p>
+						{/if}
 						<p class="mt-1 text-xs text-blue-900">{data.hiddenKeywords.keywords.length} / {MAX_HIDDEN_KEYWORDS}</p>
 					{/if}
 					<button class="primary mt-2 w-full text-sm disabled:opacity-60" onclick={autoTailor} disabled={tailoring}>

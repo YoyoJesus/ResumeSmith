@@ -55,7 +55,7 @@ function entries(value: unknown, strings: string[], booleans: string[] = [], bul
 	);
 }
 
-export function isValidTailorResume(value: unknown): value is ResumeData {
+export function isValidTailorResume(value: unknown, keywords = false): value is ResumeData {
 	if (!record(value)) return false;
 	return (
 		objectFields(value.personalInfo, ['name', 'phone', 'location', 'email', 'website', 'linkedin', 'github']) &&
@@ -88,7 +88,28 @@ export function isValidTailorResume(value: unknown): value is ResumeData {
 		objectFields(value.fontFamilies, ['heading', 'body']) &&
 		Array.isArray(value.sectionOrder) &&
 		value.sectionOrder.length <= MAX_ITEMS &&
-		value.sectionOrder.every(boundedString)
+		value.sectionOrder.every(boundedString) &&
+		(!keywords ||
+			(entries(value.presentations, ['id', 'title', 'event', 'location', 'date', 'kind', 'url']) &&
+				Array.isArray(value.customSections) &&
+				value.customSections.length <= MAX_ITEMS &&
+				value.customSections.every(
+					(section) =>
+						objectFields(section, ['id', 'heading']) && entries(section.entries, ['id', 'title', 'date'], [], true),
+				) &&
+				entries(value.publications, [
+					'id',
+					'title',
+					'authors',
+					'venue',
+					'date',
+					'url',
+					'volume',
+					'issue',
+					'pages',
+					'doi',
+					'status',
+				])))
 	);
 }
 
@@ -286,6 +307,7 @@ export function buildTailorInput(
 		lines.push(
 			'',
 			'=== HIDDEN KEYWORDS ===',
+			`The ${MAX_EDITS}-edit limit applies to non-keyword edits; up to ${MAX_KEYWORD_EDITS} keyword edits are additional.`,
 			'Also return kind "keyword" edits: pick terms from the list below that the resume above already evidences (bullets, skills, project stacks, education). Copy each term exactly as listed. Never pick a term the resume does not support. targetId MUST be "keywords" and bulletIndex MUST be -1. Return at most 30.',
 			'Terms:',
 			...terms.map((term) => `- ${term}`),

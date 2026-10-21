@@ -2,7 +2,7 @@ import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import JSZip from 'jszip';
 import { defaultResumeData } from '$lib/types';
 import { TEMPLATE_DESIGN_SCHEMA } from './template-conversion';
-const mocks = vi.hoisted(() => ({ create: vi.fn(), options: vi.fn() }));
+const mocks = vi.hoisted(() => ({ create: vi.fn(), options: vi.fn(), fetchOccupation: vi.fn() }));
 vi.mock('$env/dynamic/private', () => ({ env: { OPENAI_API_KEY: 'test', ONET_API_KEY: 'test' } }));
 vi.mock('openai', () => ({
 	default: class {
@@ -12,8 +12,13 @@ vi.mock('openai', () => ({
 		}
 	},
 }));
+vi.mock('./onet', async (importOriginal) => ({
+	...(await importOriginal<typeof import('./onet')>()),
+	fetchOccupation: mocks.fetchOccupation,
+}));
 import { POST as extract } from '../../routes/api/extract/+server';
 import { POST as convert } from '../../routes/api/template/convert/+server';
+import { POST as tailor } from '../../routes/api/onet/tailor/+server';
 import { GET as search } from '../../routes/api/onet/search/+server';
 import { MAX_CV_EXTRACT_OUTPUT_TOKENS, MAX_EXTRACT_OUTPUT_TOKENS, OPENAI_REQUEST_OPTIONS } from './upstream-limits';
 import { CV_SCHEMA } from './cv-extraction';
@@ -99,6 +104,61 @@ describe('bounded upload routes', () => {
 		const response = await search(event(new Request('https://example.test/api/onet/search?keyword=engineer')));
 		expect(await response.json()).toMatchObject({ error: { code: 'upstream_unavailable' } });
 		expect(vi.mocked(fetch).mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal);
+	});
+});
+describe('tailoring request validation', () => {
+	it.each([
+		['missing presentations', (resume: Record<string, unknown>) => delete resume.presentations],
+		['malformed presentations', (resume: Record<string, unknown>) => (resume.presentations = [{}])],
+		['missing custom sections', (resume: Record<string, unknown>) => delete resume.customSections],
+		[
+			'malformed custom sections',
+			(resume: Record<string, unknown>) => (resume.customSections = [{ id: 's', heading: 'Service', entries: [{}] }]),
+		],
+		[
+			'malformed publication extensions',
+			(resume: Record<string, unknown>) =>
+				(resume.publications = [
+					{
+						id: 'p',
+						title: 'Paper',
+						authors: '',
+						venue: '',
+						date: '',
+						url: '',
+						status: 3,
+						volume: '',
+						issue: '',
+						pages: '',
+						doi: '',
+					},
+				]),
+		],
+	])('returns invalid_request for %s with keywords enabled', async (_label, change) => {
+		const resume = structuredClone(defaultResumeData) as unknown as Record<string, unknown>;
+		resume.profile = { summary: 'Software engineer' };
+		change(resume);
+		mocks.fetchOccupation.mockResolvedValue({
+			code: '15-1252.00',
+			title: 'Software Developers',
+			description: '',
+			brightOutlook: false,
+			tasks: [],
+			detailedWorkActivities: [],
+			technologySkills: [],
+			skills: [],
+			knowledge: [],
+			abilities: [],
+			unavailable: [],
+		});
+		const request = new Request('https://example.test/api/onet/tailor', {
+			method: 'POST',
+			body: JSON.stringify({ code: '15-1252.00', resume, keywords: true }),
+		});
+		const response = await tailor(event(request));
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({ error: { code: 'invalid_request' } });
+		expect(mocks.create).not.toHaveBeenCalled();
 	});
 });
 describe('template model output', () => {

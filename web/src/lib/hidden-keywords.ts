@@ -17,6 +17,20 @@ export function addHiddenKeywords(existing: string[], additions: string[]): stri
 	return keywords;
 }
 
+export function tryAddHiddenKeyword(existing: string[], input: string): { keywords: string[]; error: string } {
+	const keywords = addHiddenKeywords(existing, [input]);
+	if (keywords.length > existing.length) return { keywords, error: '' };
+	const keyword = input.trim();
+	const error = !keyword
+		? 'Enter a keyword.'
+		: existing.length >= MAX_HIDDEN_KEYWORDS
+			? `You can add up to ${MAX_HIDDEN_KEYWORDS} hidden keywords.`
+			: keyword.length > MAX_HIDDEN_KEYWORD_CHARS
+				? `Keywords must be ${MAX_HIDDEN_KEYWORD_CHARS} characters or fewer.`
+				: 'That keyword is already in the list.';
+	return { keywords, error };
+}
+
 export function normalizeHiddenKeywords(value: unknown): HiddenKeywords {
 	if (typeof value !== 'object' || value === null || Array.isArray(value)) {
 		return { enabled: false, keywords: [] };
