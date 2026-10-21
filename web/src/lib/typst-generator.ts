@@ -1,5 +1,6 @@
 import type {
 	ResumeData,
+	HiddenKeywords,
 	WorkExperience,
 	Project,
 	Education,
@@ -272,6 +273,11 @@ function generateClearance(clearance: Clearance[]): string {
 ${items}`;
 }
 
+function generateHiddenKeywords(hidden: HiddenKeywords): string {
+	if (!hidden.enabled || hidden.keywords.length === 0) return '';
+	return `#place(bottom + left, text(fill: white, size: 1pt)[${hidden.keywords.map(typstMarkup).join(', ')}])`;
+}
+
 // Running header and "page N of M" footer; the first page already carries the name at the top.
 const CV_PAGE_DECORATIONS = `
     header: context {
@@ -434,6 +440,7 @@ export function generateTypstCode(
 		fontFamilies,
 		sectionOrder,
 		customSections,
+		hiddenKeywords,
 	} = data;
 
 	const filledEducation = education.filter((e) => e.institution.trim() || e.degree.trim() || e.major.trim());
@@ -465,6 +472,8 @@ export function generateTypstCode(
 		.map((id) => sections[id] ?? '')
 		.filter((section) => section.trim() !== '')
 		.join('\n\n');
+	const hiddenKeywordsBlock = generateHiddenKeywords(hiddenKeywords);
+	const hiddenKeywordsContent = hiddenKeywordsBlock ? `\n\n${hiddenKeywordsBlock}` : '';
 
 	const defaults = defaultResumeData.colors;
 
@@ -601,7 +610,7 @@ ${RESUME_CONTENT_MARKER}
   github-username: "${typstString(personalInfo.github)}",
 )
 
-${orderedSections}
+${orderedSections}${hiddenKeywordsContent}
 `;
 
 	if (!customTemplate) return defaultCode;

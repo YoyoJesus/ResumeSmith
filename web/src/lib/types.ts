@@ -221,6 +221,11 @@ export const sectionLabels: Record<SectionId, string> = {
 	presentations: 'Presentations',
 };
 
+export interface HiddenKeywords {
+	enabled: boolean;
+	keywords: string[];
+}
+
 export interface ResumeData {
 	documentType: DocumentType;
 	personalInfo: PersonalInfo;
@@ -237,6 +242,7 @@ export interface ResumeData {
 	publicationAuthorName: string;
 	presentations: Presentation[];
 	customSections: CustomSection[];
+	hiddenKeywords: HiddenKeywords;
 	colors: ColorSettings;
 	fonts: FontSettings;
 	fontFamilies: FontFamilies;
@@ -275,6 +281,7 @@ export const defaultResumeData: ResumeData = {
 	publicationAuthorName: '',
 	presentations: [],
 	customSections: [],
+	hiddenKeywords: { enabled: false, keywords: [] },
 	colors: {
 		headColor: '#22227f',
 		textColor: '#1b1b1b',

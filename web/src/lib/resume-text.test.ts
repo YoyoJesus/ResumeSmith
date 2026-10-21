@@ -14,6 +14,12 @@ describe('plain-text resume export', () => {
 		expect(serializeResumeText(data)).not.toMatch(/[#{}]/);
 	});
 
+	it('excludes hidden keywords from plain-text export', () => {
+		const data = fresh();
+		data.hiddenKeywords = { enabled: true, keywords: ['UniqueKeywordZ'] };
+		expect(serializeResumeText(data)).not.toContain('UniqueKeywordZ');
+	});
+
 	it('renders every populated section in the selected order with dates, URLs, and bullets', () => {
 		const data = fresh();
 		data.personalInfo = {

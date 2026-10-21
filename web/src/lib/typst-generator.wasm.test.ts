@@ -51,6 +51,19 @@ it('compiles an empty CV to a single page', TIMEOUT, async () => {
 	expect(await pageCount(generateTypstCode(data))).toBe(1);
 });
 
+it('compiles thirty escaped hidden keywords without adding a page', TIMEOUT, async () => {
+	const data = structuredClone(defaultResumeData);
+	data.personalInfo.name = 'Test Person';
+	data.hiddenKeywords = {
+		enabled: true,
+		keywords: Array.from(
+			{ length: 30 },
+			(_, index) => `Security information and event management SIEM software #[*]$@<\\ ${index}`,
+		),
+	};
+	expect(await pageCount(generateTypstCode(data))).toBe(1);
+});
+
 it('lays a long CV out over more pages than the dense resume layout', TIMEOUT, async () => {
 	const cvPages = await pageCount(generateTypstCode(longDocument('cv')));
 	expect(cvPages).toBeGreaterThan(1);

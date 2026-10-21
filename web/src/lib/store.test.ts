@@ -3,6 +3,16 @@ import { mergeWithDefaults } from './store';
 import { defaultResumeData } from './types';
 
 describe('mergeWithDefaults', () => {
+	it('defaults and normalizes hidden keywords', () => {
+		expect(mergeWithDefaults({}).hiddenKeywords).toEqual({ enabled: false, keywords: [] });
+		expect(
+			mergeWithDefaults({ hiddenKeywords: { enabled: true, keywords: ['Go', 'go'] } } as never).hiddenKeywords,
+		).toEqual({
+			enabled: true,
+			keywords: ['Go'],
+		});
+	});
+
 	it('fills in fields missing from old saved data (e.g. clearance) with defaults', () => {
 		const { clearance, ...withoutClearance } = defaultResumeData;
 		const merged = mergeWithDefaults(withoutClearance as Partial<typeof defaultResumeData>);

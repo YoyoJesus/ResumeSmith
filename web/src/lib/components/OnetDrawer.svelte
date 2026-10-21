@@ -7,6 +7,7 @@
 	import type { ResumeData } from '$lib/types';
 	import { appendBullet, appendSkill, appendSkillToNewCategory, bulletTargets, skillTargets } from '$lib/onet-insert';
 	import { applyTailorEdits } from '$lib/onet-apply';
+	import { MAX_HIDDEN_KEYWORDS, tryAddHiddenKeyword, withoutHiddenKeywords } from '$lib/hidden-keywords';
 	import { aiFilled } from '$lib/ai-highlight';
 	import { createOnetSearch } from '$lib/onet-search';
 	import OnetInsertMenu from './OnetInsertMenu.svelte';
@@ -31,6 +32,8 @@
 	let tailoring = $state(false);
 	let tailorError = $state('');
 	let tailorNote = $state('');
+	let keywordInput = $state('');
+	let keywordError = $state('');
 	let tailorController: AbortController | null = null;
 	let tailorRequest = 0;
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
@@ -160,6 +163,28 @@
 		applyPaths(result.paths);
 	}
 
+	function setHiddenKeywordsEnabled(enabled: boolean) {
+		data = { ...data, hiddenKeywords: { ...data.hiddenKeywords, enabled } };
+	}
+
+	function addManualKeyword() {
+		const { keywords, error } = tryAddHiddenKeyword(data.hiddenKeywords.keywords, keywordInput);
+		keywordError = error;
+		if (error) return;
+		data = { ...data, hiddenKeywords: { ...data.hiddenKeywords, keywords } };
+		keywordInput = '';
+	}
+
+	function removeKeyword(keyword: string) {
+		data = {
+			...data,
+			hiddenKeywords: {
+				...data.hiddenKeywords,
+				keywords: data.hiddenKeywords.keywords.filter((item) => item !== keyword),
+			},
+		};
+	}
+
 	// One click sends the resume plus the occupation code to the AI pass and
 	// applies whatever comes back, highlighted for review.
 	async function autoTailor() {
@@ -167,7 +192,7 @@
 		tailoring = true;
 		tailorError = '';
 		tailorNote = '';
-		const submitted: ResumeData = JSON.parse(JSON.stringify(data));
+		const submitted: Omit<ResumeData, 'hiddenKeywords'> = JSON.parse(JSON.stringify(withoutHiddenKeywords(data)));
 		const controller = new AbortController();
 		tailorController = controller;
 		const requestId = ++tailorRequest;
@@ -175,7 +200,12 @@
 			const res = await fetch('/api/onet/tailor', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ resume: submitted, code: occupation.code, pageCount }),
+				body: JSON.stringify({
+					resume: submitted,
+					code: occupation.code,
+					pageCount,
+					...(data.hiddenKeywords.enabled ? { keywords: true } : {}),
+				}),
 				signal: controller.signal,
 			});
 			if (requestId !== tailorRequest) return;
@@ -196,7 +226,7 @@
 			applyPaths(result.paths);
 			if (result.removed > 0 && result.paths.length === 0) onInserted();
 
-			const changes = result.paths.length + result.removed;
+			const changes = result.paths.length + result.removed + result.keywordsAdded;
 			if (changes === 0) {
 				tailorNote =
 					edits.length === 0
@@ -207,8 +237,11 @@
 				const parts = [
 					revised ? `${revised} ${revised === 1 ? 'item added or rewritten' : 'items added or rewritten'}` : '',
 					result.removed ? `${result.removed} ${result.removed === 1 ? 'bullet removed' : 'bullets removed'}` : '',
+					result.keywordsAdded
+						? `${result.keywordsAdded} hidden ${result.keywordsAdded === 1 ? 'keyword' : 'keywords'} added`
+						: '',
 				].filter(Boolean);
-				tailorNote = `${parts.join(', ')}. Changes are highlighted in purple.`;
+				tailorNote = `${parts.join(', ')}.${result.paths.length ? ' Changes are highlighted in purple.' : ''}`;
 			}
 		} catch {
 			if (controller.signal.aborted) return;
@@ -361,6 +394,52 @@
 					<p class="mt-0.5 text-xs text-blue-900">
 						AI rewrites your resume to fit this job. Changed text turns purple so you can check it.
 					</p>
+					<label class="mt-3 flex items-center gap-2 text-sm text-blue-950">
+						<input
+							type="checkbox"
+							checked={data.hiddenKeywords.enabled}
+							onchange={(event) => setHiddenKeywordsEnabled(event.currentTarget.checked)}
+						/>
+						Add hidden keywords
+					</label>
+					<p class="mt-1 text-xs text-blue-900">
+						Adds keywords your resume already supports in invisible text for applicant tracking systems. Some systems
+						show recruiters the extracted text or flag hidden text.
+					</p>
+					{#if data.hiddenKeywords.enabled}
+						<div class="mt-2 flex flex-wrap gap-1">
+							{#each data.hiddenKeywords.keywords as keyword (keyword)}
+								<span class="inline-flex items-center gap-1 rounded bg-white px-2 py-1 text-xs text-blue-950">
+									{keyword}
+									<button
+										type="button"
+										class="px-1"
+										aria-label={`Remove keyword ${keyword}`}
+										onclick={() => removeKeyword(keyword)}>×</button
+									>
+								</span>
+							{/each}
+						</div>
+						<label for="hidden-keyword-input" class="mt-2 block text-xs font-medium text-blue-950"
+							>Add a hidden keyword</label
+						>
+						<input
+							id="hidden-keyword-input"
+							type="text"
+							bind:value={keywordInput}
+							oninput={() => (keywordError = '')}
+							onkeydown={(event) => {
+								if (event.key === 'Enter') {
+									event.preventDefault();
+									addManualKeyword();
+								}
+							}}
+						/>
+						{#if keywordError}
+							<p class="mt-1 text-xs text-red-700" role="alert">{keywordError}</p>
+						{/if}
+						<p class="mt-1 text-xs text-blue-900">{data.hiddenKeywords.keywords.length} / {MAX_HIDDEN_KEYWORDS}</p>
+					{/if}
 					<button class="primary mt-2 w-full text-sm disabled:opacity-60" onclick={autoTailor} disabled={tailoring}>
 						{tailoring ? 'Rewriting...' : 'Rewrite my resume'}
 					</button>

@@ -1,6 +1,7 @@
 import type { ResumeData } from './types';
 import type { TailorEdit } from './onet-types';
 import { appendBullet, appendSkill, bulletTargets } from './onet-insert';
+import { addHiddenKeywords, withoutHiddenKeywords } from './hidden-keywords';
 
 // Apply a batch of AI-proposed edits in order, reusing the same append helpers
 // the manual "+ Add" buttons use so both paths behave identically (including
@@ -8,15 +9,19 @@ import { appendBullet, appendSkill, bulletTargets } from './onet-insert';
 // highlight. An edit whose target has since disappeared is skipped rather than
 // aborting the batch.
 export function applyTailorEdits(
-	submitted: ResumeData,
+	submitted: Omit<ResumeData, 'hiddenKeywords'>,
 	current: ResumeData,
 	edits: TailorEdit[],
-): { data: ResumeData; paths: string[]; removed: number; stale: boolean } {
-	if (JSON.stringify(submitted) !== JSON.stringify(current)) {
-		return { data: current, paths: [], removed: 0, stale: true };
+): { data: ResumeData; paths: string[]; removed: number; stale: boolean; keywordsAdded: number } {
+	if (JSON.stringify(submitted) !== JSON.stringify(withoutHiddenKeywords(current))) {
+		return { data: current, paths: [], removed: 0, stale: true, keywordsAdded: 0 };
 	}
 
 	let next = current;
+	const keywordTexts = edits.filter((edit) => edit.kind === 'keyword').map((edit) => edit.text);
+	const keywords = addHiddenKeywords(current.hiddenKeywords.keywords, keywordTexts);
+	const keywordsAdded = keywords.length - current.hiddenKeywords.keywords.length;
+	if (keywordsAdded > 0) next = { ...next, hiddenKeywords: { ...next.hiddenKeywords, keywords } };
 	const paths: string[] = [];
 	const bulletHighlights: { targetId: string; index: number }[] = [];
 	let removed = 0;
@@ -44,6 +49,7 @@ export function applyTailorEdits(
 	const appliedRemovals: typeof sortedRemovals = [];
 
 	for (const edit of edits.filter((item) => item.kind !== 'remove_bullet')) {
+		if (edit.kind === 'keyword') continue;
 		if (edit.kind === 'set_font') {
 			const key = edit.targetId as keyof ResumeData['fonts'];
 			if (!(key in next.fonts)) continue;
@@ -174,5 +180,5 @@ export function applyTailorEdits(
 		paths.push(`${key}.${entryIndex}.bullets.${highlight.index - shift}`);
 	}
 
-	return { data: next, paths, removed, stale: false };
+	return { data: next, paths, removed, stale: false, keywordsAdded };
 }

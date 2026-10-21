@@ -2,10 +2,13 @@ import type { ResumeData } from '$lib/types';
 import type { OnetOccupation, TailorEdit } from '$lib/onet-types';
 import { bulletTargets, skillTargets } from '$lib/onet-insert';
 import { estimateOverOnePage } from '$lib/resume-utils';
+import { MAX_HIDDEN_KEYWORDS, MAX_HIDDEN_KEYWORD_CHARS } from '$lib/hidden-keywords';
+import { serializeResumeText } from '$lib/resume-text';
 
 // A ceiling on how much one click can change, so a runaway response can't
 // rewrite the whole resume in a single pass.
 export const MAX_EDITS = 12;
+export const MAX_KEYWORD_EDITS = MAX_HIDDEN_KEYWORDS;
 export const MAX_TAILOR_BODY_BYTES = 200_000;
 export const MAX_COMPILED_PAGE_COUNT = 100;
 
@@ -52,7 +55,7 @@ function entries(value: unknown, strings: string[], booleans: string[] = [], bul
 	);
 }
 
-export function isValidTailorResume(value: unknown): value is ResumeData {
+export function isValidTailorResume(value: unknown, keywords = false): value is ResumeData {
 	if (!record(value)) return false;
 	return (
 		objectFields(value.personalInfo, ['name', 'phone', 'location', 'email', 'website', 'linkedin', 'github']) &&
@@ -85,7 +88,28 @@ export function isValidTailorResume(value: unknown): value is ResumeData {
 		objectFields(value.fontFamilies, ['heading', 'body']) &&
 		Array.isArray(value.sectionOrder) &&
 		value.sectionOrder.length <= MAX_ITEMS &&
-		value.sectionOrder.every(boundedString)
+		value.sectionOrder.every(boundedString) &&
+		(!keywords ||
+			(entries(value.presentations, ['id', 'title', 'event', 'location', 'date', 'kind', 'url']) &&
+				Array.isArray(value.customSections) &&
+				value.customSections.length <= MAX_ITEMS &&
+				value.customSections.every(
+					(section) =>
+						objectFields(section, ['id', 'heading']) && entries(section.entries, ['id', 'title', 'date'], [], true),
+				) &&
+				entries(value.publications, [
+					'id',
+					'title',
+					'authors',
+					'venue',
+					'date',
+					'url',
+					'volume',
+					'issue',
+					'pages',
+					'doi',
+					'status',
+				])))
 	);
 }
 
@@ -94,6 +118,8 @@ export interface AllowedTargets {
 	skills: Set<string>;
 	fields?: Set<string>;
 	bulletCounts?: Map<string, number>;
+	keywords?: Map<string, string>;
+	visibleText?: string;
 }
 
 export const TAILOR_PROMPT = [
@@ -116,30 +142,52 @@ export const TAILOR_PROMPT = [
 ].join('\n');
 
 // Strict json_schema for the OpenAI Responses API.
-export const TAILOR_SCHEMA = {
-	type: 'object',
-	additionalProperties: false,
-	required: ['edits'],
-	properties: {
-		edits: {
-			type: 'array',
-			items: {
-				type: 'object',
-				additionalProperties: false,
-				required: ['kind', 'targetId', 'text', 'bulletIndex'],
-				properties: {
-					kind: {
-						type: 'string',
-						enum: ['add_bullet', 'rewrite_bullet', 'remove_bullet', 'rewrite_field', 'set_font', 'skill'],
+export function tailorSchema(keywords: boolean) {
+	return {
+		type: 'object',
+		additionalProperties: false,
+		required: ['edits'],
+		properties: {
+			edits: {
+				type: 'array',
+				items: {
+					type: 'object',
+					additionalProperties: false,
+					required: ['kind', 'targetId', 'text', 'bulletIndex'],
+					properties: {
+						kind: {
+							type: 'string',
+							enum: keywords
+								? ['add_bullet', 'rewrite_bullet', 'remove_bullet', 'rewrite_field', 'set_font', 'skill', 'keyword']
+								: ['add_bullet', 'rewrite_bullet', 'remove_bullet', 'rewrite_field', 'set_font', 'skill'],
+						},
+						targetId: { type: 'string' },
+						text: { type: 'string' },
+						bulletIndex: { type: 'integer', minimum: -1 },
 					},
-					targetId: { type: 'string' },
-					text: { type: 'string' },
-					bulletIndex: { type: 'integer', minimum: -1 },
 				},
 			},
 		},
-	},
-} as const;
+	} as const;
+}
+
+export const TAILOR_SCHEMA = tailorSchema(false);
+
+export function occupationTerms(occupation: OnetOccupation): string[] {
+	const names = [
+		...occupation.technologySkills.map((technology) => technology.category),
+		...occupation.technologySkills.flatMap((technology) => technology.examples.map((example) => example.name)),
+		...occupation.skills.map((skill) => skill.name),
+		...occupation.knowledge.map((knowledge) => knowledge.name),
+	];
+	const seen = new Set<string>();
+	return names.filter((name) => {
+		const lower = name.toLowerCase();
+		if (seen.has(lower)) return false;
+		seen.add(lower);
+		return true;
+	});
+}
 
 function scaleLines(label: string, items: { name: string }[]): string[] {
 	return items.length ? [`${label}: ${items.map((i) => i.name).join(', ')}`] : [];
@@ -152,6 +200,7 @@ export function buildTailorInput(
 	resume: ResumeData,
 	occupation: OnetOccupation,
 	compiledPageCount?: unknown,
+	options: { keywords?: boolean } = {},
 ): { prompt: string; hasTargets: boolean; allowed: AllowedTargets } {
 	const bullets = [...bulletTargets(resume)];
 	const skills = skillTargets(resume);
@@ -253,6 +302,20 @@ export function buildTailorInput(
 		...scaleLines('Knowledge', occupation.knowledge),
 		...scaleLines('Abilities', occupation.abilities),
 	);
+	const visibleText = options.keywords ? serializeResumeText(resume).toLowerCase() : '';
+	const terms = options.keywords
+		? occupationTerms(occupation).filter((term) => !visibleText.includes(term.toLowerCase()))
+		: [];
+	if (options.keywords) {
+		lines.push(
+			'',
+			'=== HIDDEN KEYWORDS ===',
+			`The ${MAX_EDITS}-edit limit applies to non-keyword edits; up to ${MAX_KEYWORD_EDITS} keyword edits are additional.`,
+			'Also return kind "keyword" edits: pick terms from the list below that the resume above already evidences (bullets, skills, project stacks, education). Copy each term exactly as listed. Never pick a term the resume does not support. targetId MUST be "keywords" and bulletIndex MUST be -1. Return at most 30.',
+			'Terms:',
+			...terms.map((term) => `- ${term}`),
+		);
+	}
 
 	return {
 		prompt: lines.join('\n'),
@@ -272,6 +335,12 @@ export function buildTailorInput(
 					return [target.id, entry?.bullets.filter(Boolean).length ?? 0];
 				}),
 			),
+			...(options.keywords
+				? {
+						keywords: new Map(terms.map((term) => [term.toLowerCase(), term])),
+						visibleText: serializeResumeText(resume).toLowerCase(),
+					}
+				: {}),
 		},
 	};
 }
@@ -285,10 +354,10 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 
 	const out: TailorEdit[] = [];
 	const seen = new Set<string>();
+	let otherCount = 0;
+	let keywordCount = 0;
 
 	for (const item of list) {
-		if (out.length >= MAX_EDITS) break;
-
 		const { kind, targetId, text, bulletIndex } = (item ?? {}) as Record<string, unknown>;
 		if (
 			kind !== 'add_bullet' &&
@@ -296,7 +365,8 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 			kind !== 'remove_bullet' &&
 			kind !== 'rewrite_field' &&
 			kind !== 'set_font' &&
-			kind !== 'skill'
+			kind !== 'skill' &&
+			kind !== 'keyword'
 		)
 			continue;
 		if (
@@ -306,10 +376,12 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 			!Number.isInteger(bulletIndex)
 		)
 			continue;
+		if (kind === 'keyword' ? keywordCount >= MAX_KEYWORD_EDITS : otherCount >= MAX_EDITS) continue;
 
 		if (text.length > (kind === 'skill' ? MAX_SKILL_CHARS : MAX_FIELD_CHARS)) continue;
 		const trimmed = text.trim();
 		if (kind !== 'remove_bullet' && !trimmed) continue;
+		if (kind === 'keyword' && trimmed.length > MAX_HIDDEN_KEYWORD_CHARS) continue;
 		if (
 			(kind === 'add_bullet' || kind === 'skill' || kind === 'rewrite_field' || kind === 'set_font') &&
 			bulletIndex !== -1
@@ -317,7 +389,13 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 			continue;
 		if ((kind === 'rewrite_bullet' || kind === 'remove_bullet') && bulletIndex < 0) continue;
 
-		if (kind === 'set_font') {
+		let finalText = trimmed;
+		if (kind === 'keyword') {
+			if (!allowed.keywords || targetId !== 'keywords' || bulletIndex !== -1) continue;
+			const term = allowed.keywords.get(trimmed.toLowerCase());
+			if (!term || allowed.visibleText?.includes(term.toLowerCase())) continue;
+			finalText = term;
+		} else if (kind === 'set_font') {
 			const bounds: Record<string, [number, number]> = {
 				baseSize: [6, 14],
 				nameSize: [14, 32],
@@ -340,11 +418,13 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 		)
 			continue;
 
-		const key = `${kind}:${targetId}:${bulletIndex}:${trimmed.toLowerCase()}`;
+		const key = `${kind}:${targetId}:${bulletIndex}:${finalText.toLowerCase()}`;
 		if (seen.has(key)) continue;
 		seen.add(key);
 
-		out.push({ kind, targetId, text: trimmed, bulletIndex });
+		out.push({ kind, targetId, text: finalText, bulletIndex });
+		if (kind === 'keyword') keywordCount++;
+		else otherCount++;
 	}
 
 	return out;

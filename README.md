@@ -20,6 +20,7 @@ ResumeSmith is a privacy-conscious resume builder for forging polished, job-read
 - Import TXT, DOCX, or PDF resumes and CVs through a review-and-consent gate before AI parsing. Long CVs are sent in bounded parts and stitched back together in the browser.
 - Extract selectable PDF text locally and use Tesseract OCR only on pages that need it.
 - Search O\*NET occupations and use AI-assisted suggestions to tailor resume content.
+- In the tailoring drawer, enable **Add hidden keywords** to include terms already supported by your resume in the PDF's invisible text. Some applicant tracking systems show extracted text to recruiters or flag hidden text.
 - Upload a compatible Typst template for the current browser session, separately for the resume and the CV.
 - Convert a DOCX template into a contract-safe Typst design with AI assistance.
 
@@ -37,6 +38,8 @@ Current resume-upload limits are:
 An academic CV import splits the extracted text in the browser into parts of about 10,000 characters, breaking at section headings where it can, and sends them to `/api/extract` one at a time after the same consent step. The server accepts at most 12,000 characters per part and 16 parts per document, and uses a separate CV schema, so resume extraction requests are unchanged. Each part counts toward the AI rate limit below; the browser waits for `Retry-After` when it is reached. If a part fails, the parts that succeeded are kept and you can retry only the failed parts or continue without them.
 
 Resume data (including the document type), the selected O\*NET occupation, and an optional CV BibTeX file (up to 256 KB) are stored in browser `localStorage`, along with whether the footer is collapsed. The BibTeX file is never sent to the server or to AI; it is compiled in the browser and rejected if Typst cannot read it. Custom templates are stored in `sessionStorage`, take precedence over the built-in template, and are removed when that browser session ends or the user resets the template. Use **More → Your data → Delete saved data** to remove ResumeSmith's saved resume/CV, occupation, bibliography, footer preference, and custom templates from this browser; other sites' storage on the same origin is left alone. The editor resets to a blank resume, and future edits are saved again.
+
+Hidden keywords are stored with the resume in browser `localStorage` and are never sent to the server.
 
 The Typst compiler downloads its built-in fonts from jsDelivr. Web fonts (Carlito, Lato, Open Sans, Roboto) are downloaded from the Fontsource CDN on jsDelivr only when selected in the Fonts tab.
 

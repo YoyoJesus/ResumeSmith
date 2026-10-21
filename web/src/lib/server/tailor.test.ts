@@ -8,6 +8,9 @@ import {
 	MAX_FIELD_CHARS,
 	MAX_SKILL_CHARS,
 	isValidCompiledPageCount,
+	tailorSchema,
+	occupationTerms,
+	MAX_KEYWORD_EDITS,
 } from './tailor';
 import { defaultResumeData } from '$lib/types';
 import type { ResumeData } from '$lib/types';
@@ -20,6 +23,70 @@ function edit(over: Record<string, unknown> = {}) {
 }
 
 describe('validateEdits', () => {
+	it('offers keyword edits only in the opted-in schema', () => {
+		expect(tailorSchema(false)).toEqual({
+			type: 'object',
+			additionalProperties: false,
+			required: ['edits'],
+			properties: {
+				edits: {
+					type: 'array',
+					items: {
+						type: 'object',
+						additionalProperties: false,
+						required: ['kind', 'targetId', 'text', 'bulletIndex'],
+						properties: {
+							kind: {
+								type: 'string',
+								enum: ['add_bullet', 'rewrite_bullet', 'remove_bullet', 'rewrite_field', 'set_font', 'skill'],
+							},
+							targetId: { type: 'string' },
+							text: { type: 'string' },
+							bulletIndex: { type: 'integer', minimum: -1 },
+						},
+					},
+				},
+			},
+		});
+		expect(TAILOR_SCHEMA).toEqual(tailorSchema(false));
+		expect(tailorSchema(true).properties.edits.items.properties.kind.enum).toContain('keyword');
+	});
+
+	it('accepts only canonical, supported, unseen keyword terms with the keyword target', () => {
+		const targets = {
+			...allowed,
+			keywords: new Map([
+				['splunk', 'Splunk'],
+				['python', 'Python'],
+			]),
+			visibleText: 'python',
+		};
+		const keyword = (over: Record<string, unknown> = {}) =>
+			edit({ kind: 'keyword', targetId: 'keywords', text: ' SPLUNK ', bulletIndex: -1, ...over });
+		expect(validateEdits({ edits: [keyword()] }, targets)).toEqual([
+			{ kind: 'keyword', targetId: 'keywords', text: 'Splunk', bulletIndex: -1 },
+		]);
+		expect(validateEdits({ edits: [keyword({ text: 'Kubernetes' })] }, targets)).toEqual([]);
+		expect(validateEdits({ edits: [keyword({ text: 'Python' })] }, targets)).toEqual([]);
+		expect(validateEdits({ edits: [keyword(), keyword({ text: 'splunk' })] }, targets)).toHaveLength(1);
+		expect(validateEdits({ edits: [keyword()] }, allowed)).toEqual([]);
+		expect(validateEdits({ edits: [keyword({ bulletIndex: 0 })] }, targets)).toEqual([]);
+		expect(validateEdits({ edits: [keyword({ targetId: 'x' })] }, targets)).toEqual([]);
+		expect(validateEdits({ edits: [keyword({ text: 's'.repeat(81) })] }, targets)).toEqual([]);
+	});
+
+	it('caps keyword edits separately from other edits', () => {
+		const names = Array.from({ length: MAX_KEYWORD_EDITS + 5 }, (_, i) => `Term ${i}`);
+		const targets = { ...allowed, keywords: new Map(names.map((name) => [name.toLowerCase(), name])), visibleText: '' };
+		const bullets = Array.from({ length: MAX_EDITS }, (_, i) => edit({ text: `Bullet ${i}` }));
+		const keywords = names.map((text) => edit({ kind: 'keyword', targetId: 'keywords', text, bulletIndex: -1 }));
+		expect(validateEdits({ edits: [...bullets, ...keywords.slice(0, 5)] }, targets)).toHaveLength(MAX_EDITS + 5);
+		const result = validateEdits({ edits: [...bullets, ...keywords] }, targets);
+		expect(result.filter((item) => item.kind === 'add_bullet')).toHaveLength(MAX_EDITS);
+		expect(result.filter((item) => item.kind === 'keyword')).toHaveLength(MAX_KEYWORD_EDITS);
+		expect(validateEdits({ edits: [...keywords, ...bullets] }, targets)).toHaveLength(MAX_KEYWORD_EDITS + MAX_EDITS);
+	});
+
 	it('requires every declared edit property for strict OpenAI JSON schema compatibility', () => {
 		expect(TAILOR_SCHEMA.properties.edits.items.required).toEqual(['kind', 'targetId', 'text', 'bulletIndex']);
 	});
@@ -94,12 +161,62 @@ describe('buildTailorInput', () => {
 		brightOutlook: false,
 		tasks: [{ id: 't1', text: 'Modify existing software.' }],
 		detailedWorkActivities: [],
-		technologySkills: [{ category: 'IDEs', examples: [{ name: 'Git', hot: true }] }],
+		technologySkills: [
+			{
+				category: 'IDEs',
+				examples: [
+					{ name: 'Git', hot: true },
+					{ name: 'Splunk', hot: false },
+				],
+			},
+		],
 		skills: [{ id: 'k1', name: 'Programming', description: 'Writing programs.' }],
 		knowledge: [],
 		abilities: [],
 		unavailable: [],
 	} as OnetOccupation;
+
+	it('lists unique occupation terms in category, example, skill, knowledge order', () => {
+		const withDuplicates = {
+			...occupation,
+			technologySkills: [
+				{
+					category: 'IDEs',
+					examples: [
+						{ name: 'Git', hot: true },
+						{ name: 'Splunk', hot: false },
+					],
+				},
+				{ category: 'ides', examples: [{ name: 'Python', hot: false }] },
+			],
+			skills: [
+				{ id: 's1', name: 'Programming', description: '' },
+				{ id: 's2', name: 'SPLUNK', description: '' },
+			],
+			knowledge: [{ id: 'k1', name: 'Systems', description: '' }],
+		};
+		expect(occupationTerms(withDuplicates)).toEqual(['IDEs', 'Git', 'Splunk', 'Python', 'Programming', 'Systems']);
+	});
+
+	it('keeps the default prompt unchanged when keywords are disabled', () => {
+		const original = buildTailorInput(resume(), occupation);
+		const disabled = buildTailorInput(resume(), occupation, undefined, { keywords: false });
+		expect(original.prompt).toBe(disabled.prompt);
+		expect(original.prompt).not.toContain('HIDDEN KEYWORDS');
+		expect(disabled.prompt).not.toContain('HIDDEN KEYWORDS');
+		expect(original.allowed.keywords).toBeUndefined();
+		expect(disabled.allowed.keywords).toBeUndefined();
+	});
+
+	it('offers grounded occupation terms when keywords are enabled', () => {
+		const { prompt, allowed } = buildTailorInput(resume(), occupation, undefined, { keywords: true });
+		expect(prompt).toContain('=== HIDDEN KEYWORDS ===');
+		for (const term of occupationTerms(occupation)) expect(prompt).toContain(`- ${term}`);
+		expect(allowed.keywords?.get('splunk')).toBe('Splunk');
+		expect(allowed.visibleText).toContain('python');
+		expect(prompt).toContain('targetId MUST be "keywords" and bulletIndex MUST be -1. Return at most 30.');
+		expect(prompt).toContain('The 12-edit limit applies to non-keyword edits; up to 30 keyword edits are additional.');
+	});
 
 	function resume(): ResumeData {
 		return {
@@ -240,8 +357,43 @@ describe('isValidCompiledPageCount', () => {
 });
 
 describe('isValidTailorResume', () => {
+	it.each([
+		['missing presentations', (resume: Record<string, unknown>) => delete resume.presentations],
+		['malformed presentations', (resume: Record<string, unknown>) => (resume.presentations = [{}])],
+		['missing custom sections', (resume: Record<string, unknown>) => delete resume.customSections],
+		[
+			'malformed custom sections',
+			(resume: Record<string, unknown>) => (resume.customSections = [{ id: 's', heading: 'Service', entries: [{}] }]),
+		],
+		[
+			'malformed publication extensions',
+			(resume: Record<string, unknown>) =>
+				(resume.publications = [
+					{
+						id: 'p',
+						title: 'Paper',
+						authors: '',
+						venue: '',
+						date: '',
+						url: '',
+						status: 3,
+						volume: '',
+						issue: '',
+						pages: '',
+						doi: '',
+					},
+				]),
+		],
+	])('rejects %s for keyword evidence serialization', (_label, change) => {
+		const resume = structuredClone(defaultResumeData) as unknown as Record<string, unknown>;
+		change(resume);
+		expect(isValidTailorResume(resume, true)).toBe(false);
+	});
 	it('accepts the complete application resume shape', () => {
 		expect(isValidTailorResume(structuredClone(defaultResumeData))).toBe(true);
+		const withoutKeywords = structuredClone(defaultResumeData) as unknown as Record<string, unknown>;
+		delete withoutKeywords.hiddenKeywords;
+		expect(isValidTailorResume(withoutKeywords)).toBe(true);
 	});
 
 	it('rejects missing arrays before prompt construction', () => {
