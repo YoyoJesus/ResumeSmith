@@ -59,11 +59,12 @@ export const onetSectionLabels: Record<OnetSectionName, string> = {
 };
 
 // One change proposed by the AI tailor pass. `targetId` is the id of a work
-// experience / project entry (the bullet kinds) or a skill category (skill).
+// experience / project entry (the bullet kinds), a skill category (skill),
+// or "keywords" (keyword).
 // bulletIndex identifies an existing bullet for rewrite/remove; it is -1 for
-// additions and skills.
+// additions, skills, and keywords.
 export interface TailorEdit {
-	kind: 'add_bullet' | 'rewrite_bullet' | 'remove_bullet' | 'rewrite_field' | 'set_font' | 'skill';
+	kind: 'add_bullet' | 'rewrite_bullet' | 'remove_bullet' | 'rewrite_field' | 'set_font' | 'skill' | 'keyword';
 	targetId: string;
 	text: string;
 	bulletIndex: number;
