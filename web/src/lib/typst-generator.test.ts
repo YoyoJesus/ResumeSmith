@@ -8,10 +8,39 @@ import {
 } from './typst-generator';
 import { defaultResumeData, defaultFontSettings } from './types';
 import type { Presentation, Publication, ResumeData, WorkExperience } from './types';
+import { typstMarkup } from './typst-escape';
 
 function baseData(clearance: ResumeData['clearance']): ResumeData {
 	return { ...structuredClone(defaultResumeData), clearance };
 }
+
+describe('generateTypstCode hidden keywords', () => {
+	it('omits the block when disabled or empty', () => {
+		const data = structuredClone(defaultResumeData);
+		data.hiddenKeywords = { enabled: false, keywords: ['Splunk'] };
+		expect(generateTypstCode(data)).not.toContain('fill: white, size: 1pt');
+		data.hiddenKeywords = { enabled: true, keywords: [] };
+		expect(generateTypstCode(data)).not.toContain('fill: white, size: 1pt');
+	});
+
+	it('renders escaped keywords after the last section heading in default and custom templates', () => {
+		const data = structuredClone(defaultResumeData);
+		data.skills = [{ id: 's', category: 'Tools', skills: 'TypeScript' }];
+		data.hiddenKeywords = { enabled: true, keywords: ['Splunk', 'C#'] };
+		const block = `#place(bottom + left, text(fill: white, size: 1pt)[Splunk, ${typstMarkup('C#')}])`;
+		const code = generateTypstCode(data);
+		expect(code).toContain(`\n\n${block}`);
+		expect(code.indexOf(block)).toBeGreaterThan(code.lastIndexOf('= Skills'));
+		expect(generateTypstCode(data, `#let custom = true\n${RESUME_CONTENT_MARKER}\n`)).toContain(block);
+	});
+
+	it('excludes keywords from shared templates but counts them as resume content', () => {
+		const data = structuredClone(defaultResumeData);
+		data.hiddenKeywords = { enabled: true, keywords: ['Splunk'] };
+		expect(generateTypstTemplate(data)).not.toContain('Splunk');
+		expect(hasResumeContent(data)).toBe(true);
+	});
+});
 
 describe('generateTypstCode clearance section', () => {
 	it('omits the Clearance heading when there are no entries', () => {
