@@ -47,7 +47,7 @@ Institution suggestions come from a static list bundled with the app and derived
 
 The deployed site uses Vercel Web Analytics to count anonymous page views. It does not use cookies and does not receive resume content, templates, or uploaded files.
 
-AI-backed routes use stateless Vercel functions and request `store: false` from OpenAI. This project has no database or persistent server-side file storage.
+AI-backed routes use stateless Vercel functions and request `store: false` from OpenAI. Tailoring sends trusted rules separately from escaped, explicitly untrusted resume and occupation text, and instructs the model to ignore embedded commands and avoid unsupported claims. Returned edits still undergo target and size validation before review. This project has no database or persistent server-side file storage.
 
 ## Local development
 

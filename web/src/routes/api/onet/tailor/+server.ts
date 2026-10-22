@@ -67,7 +67,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	} catch {
 		return onetFail(onetError('invalid_request'));
 	}
-	const { prompt, hasTargets, allowed } = input;
+	const { instructions, input: contentInput, hasTargets, allowed } = input;
 	if (!hasTargets) return json({ edits: [], reason: 'no_targets' });
 
 	try {
@@ -75,8 +75,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		const response = await client.responses.create(
 			{
 				model: MODEL,
+				instructions,
+				input: [{ role: 'user', content: [{ type: 'input_text', text: contentInput }] }],
 				store: false,
-				input: [{ role: 'user', content: [{ type: 'input_text', text: prompt }] }],
 				reasoning: { effort: 'medium' },
 				max_output_tokens: MAX_TAILOR_OUTPUT_TOKENS,
 				text: {
