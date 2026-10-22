@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyTailorReview, stageTailorReview, undoTailorReview } from './onet-review';
+import { sameRevision, applyTailorReview, stageTailorReview, undoTailorReview } from './onet-review';
 import { defaultResumeData, type ResumeData } from './types';
 import type { TailorEdit } from './onet-types';
 
@@ -281,5 +281,31 @@ describe('applyTailorReview and undoTailorReview', () => {
 		const undone = undoTailorReview(changed, result.undo!);
 		expect(undone).toEqual({ data: changed, stale: true, undone: false });
 		expect(undone.data).toBe(changed);
+	});
+});
+
+describe('sameRevision', () => {
+	it('keeps UI, apply, and undo guards consistent for reordered nested object keys', () => {
+		const data = seed();
+		const reorder = (value: ResumeData): ResumeData =>
+			JSON.parse(
+				JSON.stringify(value, (_, item) =>
+					item && typeof item === 'object' && !Array.isArray(item)
+						? Object.fromEntries(Object.entries(item).reverse())
+						: item,
+				),
+			);
+		const restored = reorder(data);
+		expect(JSON.stringify(restored)).not.toBe(JSON.stringify(data));
+		expect(sameRevision(data, restored)).toBe(true);
+		const suggestions = stage(data, [edit('rewrite_field', 'profile', 'Accepted')]);
+		const applied = applyTailorReview(data, restored, suggestions, [suggestions[0].id]);
+		expect(applied.stale).toBe(false);
+		const reorderedAfter = reorder(applied.data);
+		expect(sameRevision(applied.undo!.after, reorderedAfter)).toBe(true);
+		expect(undoTailorReview(reorderedAfter, applied.undo!).data).toEqual(data);
+		reorderedAfter.workExperience[0].bullets.reverse();
+		expect(sameRevision(applied.undo!.after, reorderedAfter)).toBe(false);
+		expect(undoTailorReview(reorderedAfter, applied.undo!).stale).toBe(true);
 	});
 });

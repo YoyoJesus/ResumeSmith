@@ -140,6 +140,7 @@ export const TAILOR_INSTRUCTIONS_BASE = [
 	'',
 	`Return at most ${MAX_EDITS} edits.`,
 	'Every targetId MUST be copied exactly from the target lists provided in the resume data; never invent one.',
+	'Source data encodes &, <, and > as &amp;, &lt;, and &gt;. Use that same encoding in returned targetId and text strings, including encoding any literal ampersands. Outputs are decoded exactly once before validation; a literal &lt; in the original source is encoded as &amp;lt;.',
 	'Use kind "add_bullet" to add a grounded bullet, "rewrite_bullet" to improve an existing bullet, "remove_bullet" to remove an existing bullet, "rewrite_field" to tailor an explicitly listed profile, project-stack:<id>, or achievement-description:<id> field, "set_font" to adjust one listed font size, or "skill" with a skill category id.',
 	'For rewrite_bullet and remove_bullet, bulletIndex MUST be the zero-based index shown beside that bullet. For add_bullet and skill, bulletIndex MUST be -1.',
 	'For rewrite_field and set_font, bulletIndex MUST be -1. set_font text MUST be a numeric point size within the listed bounds, and should be used to help an overlong resume fit one page.',
@@ -172,8 +173,15 @@ export function buildTailorInstructions(options: { isOverOnePage: boolean; keywo
 	return lines.join('\n');
 }
 
+/** Encode source text for prompt delimiters, preserving literal entity-like text. */
 export function escapeTags(text: string): string {
-	return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+/** Reverse only our three prompt entities in one pass, never recursively. */
+function unescapeTags(text: string): string {
+	const entities: Record<string, string> = { '&amp;': '&', '&lt;': '<', '&gt;': '>' };
+	return text.replace(/&(?:amp|lt|gt);/g, (entity) => entities[entity]);
 }
 
 // Strict json_schema for the OpenAI Responses API.
@@ -407,7 +415,7 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 	let keywordCount = 0;
 
 	for (const item of list) {
-		const { kind, targetId, text, bulletIndex } = (item ?? {}) as Record<string, unknown>;
+		const { kind, targetId: encodedTargetId, text: encodedText, bulletIndex } = (item ?? {}) as Record<string, unknown>;
 		if (
 			kind !== 'add_bullet' &&
 			kind !== 'rewrite_bullet' &&
@@ -419,12 +427,14 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 		)
 			continue;
 		if (
-			typeof targetId !== 'string' ||
-			typeof text !== 'string' ||
+			typeof encodedTargetId !== 'string' ||
+			typeof encodedText !== 'string' ||
 			typeof bulletIndex !== 'number' ||
 			!Number.isInteger(bulletIndex)
 		)
 			continue;
+		const targetId = unescapeTags(encodedTargetId);
+		const text = unescapeTags(encodedText);
 		if (kind === 'keyword' ? keywordCount >= MAX_KEYWORD_EDITS : otherCount >= MAX_EDITS) continue;
 
 		if (text.length > (kind === 'skill' ? MAX_SKILL_CHARS : MAX_FIELD_CHARS)) continue;

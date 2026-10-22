@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
 	validateEdits,
+	escapeTags,
 	MAX_EDITS,
 	buildTailorInput,
 	isValidTailorResume,
@@ -572,4 +573,51 @@ it.each([
 	const item = edit({ kind, targetId, bulletIndex, text: 'x'.repeat(Number(limit)) });
 	expect(validateEdits({ edits: [item] }, targets)).toHaveLength(1);
 	expect(validateEdits({ edits: [{ ...item, text: item.text + 'x' }] }, targets)).toEqual([]);
+});
+
+describe('tailoring prompt encoding round trip', () => {
+	it('escapes ampersands before delimiters so literal entities remain distinct', () => {
+		expect(escapeTags('R&D <API> &lt; &amp;')).toBe('R&amp;D &lt;API&gt; &amp;lt; &amp;amp;');
+	});
+
+	it.each(['w<1>&team', 'w&lt;1&gt;&amp;team'])('validates copied encoded IDs against raw targets: %s', (targetId) => {
+		const text = 'Improved <API> for R&D; documented literal &lt; and &amp;.';
+		const targets = { bullets: new Set([targetId]), skills: new Set<string>(), bulletCounts: new Map([[targetId, 1]]) };
+		const result = validateEdits(
+			{
+				edits: [
+					edit({ kind: 'rewrite_bullet', targetId: escapeTags(targetId), text: escapeTags(text), bulletIndex: 0 }),
+				],
+			},
+			targets,
+		);
+		expect(result).toEqual([{ kind: 'rewrite_bullet', targetId, text, bulletIndex: 0 }]);
+	});
+
+	it('rejects forged IDs after decoding and deduplicates decoded text', () => {
+		const targets = { bullets: new Set(['w<1>']), skills: new Set<string>() };
+		expect(validateEdits({ edits: [edit({ targetId: 'forged&lt;1&gt;' })] }, targets)).toEqual([]);
+		expect(
+			validateEdits(
+				{
+					edits: [
+						edit({ targetId: 'w&lt;1&gt;', text: '&lt;API&gt;' }),
+						edit({ targetId: 'w&lt;1&gt;', text: '<API>' }),
+					],
+				},
+				targets,
+			),
+		).toEqual([edit({ targetId: 'w<1>', text: '<API>' })]);
+	});
+
+	it('checks decoded lengths without rejecting expanded prompt entities', () => {
+		const targets = { bullets: new Set(['w1']), skills: new Set(['s1']) };
+		const text = '&'.repeat(MAX_SKILL_CHARS);
+		expect(
+			validateEdits({ edits: [edit({ kind: 'skill', targetId: 's1', text: escapeTags(text) })] }, targets),
+		).toEqual([edit({ kind: 'skill', targetId: 's1', text })]);
+		expect(
+			validateEdits({ edits: [edit({ kind: 'skill', targetId: 's1', text: escapeTags(text + '&') })] }, targets),
+		).toEqual([]);
+	});
 });

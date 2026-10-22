@@ -33,6 +33,11 @@ function revision(data: ResumeData): string {
 	);
 }
 
+/** Compare complete resume values, ignoring object key order but preserving array order. */
+export function sameRevision(a: ResumeData, b: ResumeData): boolean {
+	return revision(a) === revision(b);
+}
+
 function snapshot(data: ResumeData): ResumeData {
 	return JSON.parse(JSON.stringify(data));
 }
@@ -127,7 +132,7 @@ export function stageTailorReview(
 	current: ResumeData,
 	edits: TailorEdit[],
 ): { stale: boolean; suggestions: TailorSuggestion[] } {
-	if (revision(submitted) !== revision(current)) return { stale: true, suggestions: [] };
+	if (!sameRevision(submitted, current)) return { stale: true, suggestions: [] };
 	const candidates = edits
 		.map((edit, index) => ({ edit: { ...edit }, id: `tailor-${index}`, description: describe(current, edit) }))
 		.filter((item) => item.description !== null);
@@ -148,9 +153,9 @@ export function stageTailorReview(
 			? JSON.stringify([edit.kind, edit.targetId, edit.bulletIndex])
 			: null;
 		if (writeKey && written.has(writeKey)) continue;
-		if (revision(apply(current, [edit]).data) === revision(current)) continue;
+		if (sameRevision(apply(current, [edit]).data, current)) continue;
 		const next = apply(current, [...suggestions.map((item) => item.edit), edit]).data;
-		if (revision(next) === revision(staged)) continue;
+		if (sameRevision(next, staged)) continue;
 		suggestions.push({ id, edit, ...description! });
 		staged = next;
 		if (writeKey) written.add(writeKey);
@@ -188,7 +193,7 @@ export function applyTailorReview(
 		.map((item) => item.edit);
 	if (!edits.length) return empty;
 	const result = apply(current, edits);
-	if (revision(result.data) === revision(current)) return empty;
+	if (sameRevision(result.data, current)) return empty;
 	return {
 		...result,
 		applied: edits.length,
@@ -201,6 +206,6 @@ export function undoTailorReview(
 	current: ResumeData,
 	undo: TailorUndo,
 ): { data: ResumeData; stale: boolean; undone: boolean } {
-	if (revision(current) !== revision(undo.after)) return { data: current, stale: true, undone: false };
+	if (!sameRevision(current, undo.after)) return { data: current, stale: true, undone: false };
 	return { data: snapshot(undo.before), stale: false, undone: true };
 }

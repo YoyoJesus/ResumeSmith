@@ -84,6 +84,42 @@ afterEach(() => {
 });
 
 describe('POST /api/onet/tailor route regressions', () => {
+	it('round-trips encoded targets and text through the Responses request and validation', async () => {
+		const resume = createResume();
+		const targetId = 'work<1>&lt;';
+		resume.workExperience[0].id = targetId;
+		resume.workExperience[0].bullets = ['Used <API> & literal &lt; syntax.'];
+		mocks.create.mockResolvedValueOnce({
+			status: 'completed',
+			output_text: JSON.stringify({
+				edits: [
+					{
+						kind: 'rewrite_bullet',
+						targetId: 'work&lt;1&gt;&amp;lt;',
+						bulletIndex: 0,
+						text: 'Documented &lt;API&gt; &amp; literal &amp;lt; syntax.',
+					},
+				],
+			}),
+		});
+		const response = await POST(event(jsonRequest({ code: '15-1252.00', resume })));
+		expect(response.status).toBe(200);
+		expect(await response.json()).toEqual({
+			edits: [
+				{
+					kind: 'rewrite_bullet',
+					targetId,
+					bulletIndex: 0,
+					text: 'Documented <API> & literal &lt; syntax.',
+				},
+			],
+		});
+		const request = mocks.create.mock.calls[0][0];
+		expect(request.instructions).toContain('Outputs are decoded exactly once before validation');
+		expect(request.input[0].content[0].text).toContain('id=work&lt;1&gt;&amp;lt;');
+		expect(request.input[0].content[0].text).toContain('Used &lt;API&gt; &amp; literal &amp;lt; syntax.');
+	});
+
 	it('invokes OpenAI Responses API with separate instructions channel, untrusted input, and store: false', async () => {
 		mocks.create.mockResolvedValueOnce({
 			status: 'completed',

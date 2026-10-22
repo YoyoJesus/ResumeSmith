@@ -7,6 +7,7 @@
 	import type { ResumeData } from '$lib/types';
 	import { appendBullet, appendSkill, appendSkillToNewCategory, bulletTargets, skillTargets } from '$lib/onet-insert';
 	import {
+		sameRevision,
 		stageTailorReview,
 		applyTailorReview,
 		undoTailorReview,
@@ -44,8 +45,8 @@
 	let undoHighlights: string[] = [];
 	let reviewHeading = $state<HTMLElement>();
 	let tailorButton = $state<HTMLButtonElement>();
-	const reviewStale = $derived(review !== null && JSON.stringify(review.submitted) !== JSON.stringify(data));
-	const undoStale = $derived(undo !== null && JSON.stringify(undo.after) !== JSON.stringify(data));
+	const reviewStale = $derived(review !== null && !sameRevision(review.submitted, data));
+	const undoStale = $derived(undo !== null && !sameRevision(undo.after, data));
 	let keywordInput = $state('');
 	let keywordError = $state('');
 	let tailorController: AbortController | null = null;
