@@ -6,7 +6,13 @@
 	import type { OnetOccupation, OnetOccupationRef, OnetSectionName, TailorEdit } from '$lib/onet-types';
 	import type { ResumeData } from '$lib/types';
 	import { appendBullet, appendSkill, appendSkillToNewCategory, bulletTargets, skillTargets } from '$lib/onet-insert';
-	import { applyTailorEdits } from '$lib/onet-apply';
+	import {
+		stageTailorReview,
+		applyTailorReview,
+		undoTailorReview,
+		type TailorSuggestion,
+		type TailorUndo,
+	} from '$lib/onet-review';
 	import { MAX_HIDDEN_KEYWORDS, tryAddHiddenKeyword, withoutHiddenKeywords } from '$lib/hidden-keywords';
 	import { aiFilled } from '$lib/ai-highlight';
 	import { createOnetSearch } from '$lib/onet-search';
@@ -32,6 +38,14 @@
 	let tailoring = $state(false);
 	let tailorError = $state('');
 	let tailorNote = $state('');
+	let review = $state<{ submitted: ResumeData; suggestions: TailorSuggestion[] } | null>(null);
+	let selectedIds = $state<string[]>([]);
+	let undo = $state<TailorUndo | null>(null);
+	let undoHighlights: string[] = [];
+	let reviewHeading = $state<HTMLElement>();
+	let tailorButton = $state<HTMLButtonElement>();
+	const reviewStale = $derived(review !== null && JSON.stringify(review.submitted) !== JSON.stringify(data));
+	const undoStale = $derived(undo !== null && JSON.stringify(undo.after) !== JSON.stringify(data));
 	let keywordInput = $state('');
 	let keywordError = $state('');
 	let tailorController: AbortController | null = null;
@@ -59,6 +73,7 @@
 	onDestroy(() => {
 		clearTimeout(searchTimer);
 		search.invalidate();
+		abandonPendingTailor();
 	});
 
 	$effect(() => {
@@ -118,9 +133,12 @@
 		tailorController?.abort();
 		tailorController = null;
 		tailorRequest++;
+		tailoring = false;
 	}
 
 	function changeOccupation() {
+		review = null;
+		selectedIds = [];
 		occupation = null;
 		error = '';
 		tailorError = '';
@@ -185,14 +203,13 @@
 		};
 	}
 
-	// One click sends the resume plus the occupation code to the AI pass and
-	// applies whatever comes back, highlighted for review.
+	// The AI response is staged in memory. Only Apply selected changes the resume.
 	async function autoTailor() {
-		if (!occupation || tailoring) return;
+		if (!occupation || tailoring || review) return;
 		tailoring = true;
 		tailorError = '';
 		tailorNote = '';
-		const submitted: Omit<ResumeData, 'hiddenKeywords'> = JSON.parse(JSON.stringify(withoutHiddenKeywords(data)));
+		const submitted: ResumeData = JSON.parse(JSON.stringify(data));
 		const controller = new AbortController();
 		tailorController = controller;
 		const requestId = ++tailorRequest;
@@ -201,7 +218,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					resume: submitted,
+					resume: withoutHiddenKeywords(submitted),
 					code: occupation.code,
 					pageCount,
 					...(data.hiddenKeywords.enabled ? { keywords: true } : {}),
@@ -217,39 +234,73 @@
 			const edits: TailorEdit[] = (await res.json()).edits ?? [];
 			if (requestId !== tailorRequest) return;
 
-			const result = applyTailorEdits(submitted, data, edits);
+			const result = stageTailorReview(submitted, data, edits);
 			if (result.stale) {
 				tailorError = 'Your resume changed while tailoring was running. Review your edits, then try again.';
 				return;
 			}
-			data = result.data;
-			applyPaths(result.paths);
-			if (result.removed > 0 && result.paths.length === 0) onInserted();
-
-			const changes = result.paths.length + result.removed + result.keywordsAdded;
-			if (changes === 0) {
-				tailorNote =
-					edits.length === 0
-						? 'No changes. Nothing in this job matched your resume.'
-						: 'No changes. Your resume already covers these suggestions.';
-			} else {
-				const revised = result.paths.length;
-				const parts = [
-					revised ? `${revised} ${revised === 1 ? 'item added or rewritten' : 'items added or rewritten'}` : '',
-					result.removed ? `${result.removed} ${result.removed === 1 ? 'bullet removed' : 'bullets removed'}` : '',
-					result.keywordsAdded
-						? `${result.keywordsAdded} hidden ${result.keywordsAdded === 1 ? 'keyword' : 'keywords'} added`
-						: '',
-				].filter(Boolean);
-				tailorNote = `${parts.join(', ')}.${result.paths.length ? ' Changes are highlighted in purple.' : ''}`;
+			if (result.suggestions.length === 0) {
+				tailorNote = 'No changes. Your resume already covers these suggestions, or no supported changes were found.';
+				return;
 			}
+			review = { submitted, suggestions: result.suggestions };
+			selectedIds = result.suggestions.map((suggestion) => suggestion.id);
+			await tick();
+			reviewHeading?.focus();
 		} catch {
 			if (controller.signal.aborted) return;
 			tailorError = GENERIC_ERROR;
 		} finally {
 			if (tailorController === controller) tailorController = null;
-			tailoring = false;
+			if (requestId === tailorRequest) tailoring = false;
 		}
+	}
+
+	function discardReview() {
+		review = null;
+		selectedIds = [];
+		tailorNote = 'Suggestions discarded. Your resume was not changed.';
+		void tick().then(() => tailorButton?.focus());
+	}
+
+	function applySelected() {
+		if (!review || selectedIds.length === 0) return;
+		const result = applyTailorReview(review.submitted, data, review.suggestions, selectedIds);
+		if (result.stale) {
+			tailorError = 'Your resume changed. Discard these suggestions and request a new batch.';
+			return;
+		}
+		undoHighlights = [...aiFilled];
+		undo = result.undo;
+		data = result.data;
+		// Removals can shift indexed highlights, so start a fresh highlight set.
+		aiFilled.clear();
+		for (const path of result.paths) aiFilled.add(path);
+		if (result.applied > 0) onInserted();
+		review = null;
+		selectedIds = [];
+		tailorNote = `${result.applied} ${result.applied === 1 ? 'suggestion applied' : 'suggestions applied'}.`;
+		void tick().then(() => tailorButton?.focus());
+	}
+
+	function undoApplied() {
+		if (!undo) return;
+		const result = undoTailorReview(data, undo);
+		if (result.stale) {
+			tailorError = 'Your resume changed after applying suggestions. Undo is no longer available.';
+			return;
+		}
+		data = result.data;
+		undo = null;
+		aiFilled.clear();
+		for (const path of undoHighlights) aiFilled.add(path);
+		onInserted();
+		tailorNote = 'Tailoring changes undone.';
+		void tick().then(() => tailorButton?.focus());
+	}
+
+	function toggleSuggestion(id: string, checked: boolean) {
+		selectedIds = checked ? [...selectedIds, id] : selectedIds.filter((selected) => selected !== id);
 	}
 
 	function toggleMenu(key: string) {
@@ -282,7 +333,7 @@
 			drawer.querySelectorAll<HTMLElement>(
 				'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, a[href], [tabindex]:not([tabindex="-1"])',
 			),
-		).filter((element) => !element.hasAttribute('hidden'));
+		).filter((element) => element.getClientRects().length > 0);
 		if (focusable.length === 0) {
 			e.preventDefault();
 			drawer.focus();
@@ -392,7 +443,7 @@
 				<section class="mb-5 rounded-lg border border-blue-200 bg-blue-50 p-3">
 					<h4 class="text-sm font-semibold text-blue-950">Let AI do it</h4>
 					<p class="mt-0.5 text-xs text-blue-900">
-						AI rewrites your resume to fit this job. Changed text turns purple so you can check it.
+						AI suggests changes for this job. Review before and after text, then apply only the suggestions you choose.
 					</p>
 					<label class="mt-3 flex items-center gap-2 text-sm text-blue-950">
 						<input
@@ -440,11 +491,82 @@
 						{/if}
 						<p class="mt-1 text-xs text-blue-900">{data.hiddenKeywords.keywords.length} / {MAX_HIDDEN_KEYWORDS}</p>
 					{/if}
-					<button class="primary mt-2 w-full text-sm disabled:opacity-60" onclick={autoTailor} disabled={tailoring}>
-						{tailoring ? 'Rewriting...' : 'Rewrite my resume'}
+					<button
+						bind:this={tailorButton}
+						class="primary mt-2 w-full text-sm disabled:opacity-60"
+						onclick={autoTailor}
+						disabled={tailoring || review !== null}
+					>
+						{tailoring ? 'Finding suggestions...' : 'Suggest resume changes'}
 					</button>
+					{#if review}
+						<section aria-labelledby="tailor-review-title" class="mt-3 rounded border border-blue-200 bg-white p-3">
+							<h4 bind:this={reviewHeading} id="tailor-review-title" tabindex="-1" class="font-semibold">
+								Review suggestions
+							</h4>
+							<p class="mt-1 text-xs text-gray-600">
+								Your resume has not changed. Checked suggestions will be applied together. Uncheck a suggestion to
+								reject it.
+							</p>
+							{#if reviewStale}
+								<p role="alert" class="mt-2 text-sm text-red-700">
+									Your resume changed. Discard this batch and request new suggestions.
+								</p>
+							{/if}
+							<div class="my-2 flex gap-2">
+								<button
+									class="secondary text-xs"
+									onclick={() => (selectedIds = review!.suggestions.map((item) => item.id))}>Select all</button
+								>
+								<button class="secondary text-xs" onclick={() => (selectedIds = [])}>Reject all</button>
+							</div>
+							<ul class="space-y-3">
+								{#each review.suggestions as suggestion (suggestion.id)}
+									<li class="rounded border border-gray-200 p-2 text-xs">
+										<label class="flex items-start gap-2 font-semibold">
+											<input
+												type="checkbox"
+												checked={selectedIds.includes(suggestion.id)}
+												onchange={(event) => toggleSuggestion(suggestion.id, event.currentTarget.checked)}
+											/>
+											<span>{suggestion.label}: {suggestion.location}</span>
+										</label>
+										<dl class="mt-2 space-y-1 break-words">
+											<dt class="font-semibold">Before</dt>
+											<dd class="whitespace-pre-wrap">{suggestion.before || '(empty)'}</dd>
+											<dt class="font-semibold">After</dt>
+											<dd class="whitespace-pre-wrap">{suggestion.after || '(removed)'}</dd>
+										</dl>
+									</li>
+								{/each}
+							</ul>
+							<p class="mt-2 text-xs" aria-live="polite">
+								{selectedIds.length} of {review.suggestions.length} selected
+							</p>
+							<div class="mt-2 flex flex-wrap gap-2">
+								<button
+									class="primary text-sm disabled:opacity-60"
+									disabled={reviewStale || selectedIds.length === 0}
+									onclick={applySelected}>Apply selected</button
+								>
+								<button class="secondary text-sm" onclick={discardReview}>Discard batch</button>
+							</div>
+						</section>
+					{/if}
+					{#if undo}
+						<button
+							class="secondary mt-2 text-sm disabled:opacity-60"
+							disabled={undoStale || review !== null || tailoring}
+							onclick={undoApplied}>Undo tailoring changes</button
+						>
+						{#if undoStale}<p class="mt-1 text-xs text-gray-600">
+								Undo unavailable because your resume changed after applying suggestions.
+							</p>{/if}
+					{/if}
 					{#if tailorNote}
-						<p class="mt-2 rounded border border-blue-200 bg-white px-3 py-2 text-xs text-gray-700">{tailorNote}</p>
+						<p role="status" class="mt-2 rounded border border-blue-200 bg-white px-3 py-2 text-xs text-gray-700">
+							{tailorNote}
+						</p>
 					{/if}
 					{#if tailorError}
 						<p class="mt-2 rounded border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">{tailorError}</p>

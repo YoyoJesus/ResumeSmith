@@ -19,7 +19,7 @@ ResumeSmith is a privacy-conscious resume builder for forging polished, job-read
 - Pick separate heading and body fonts, and adjust font sizes with sliders or 0.5 pt steps.
 - Import TXT, DOCX, or PDF resumes and CVs through a review-and-consent gate before AI parsing. Long CVs are sent in bounded parts and stitched back together in the browser.
 - Extract selectable PDF text locally and use Tesseract OCR only on pages that need it.
-- Search O\*NET occupations and use AI-assisted suggestions to tailor resume content.
+- Search O\*NET occupations and review AI tailoring suggestions with before/after values, including deleted text. Accept or reject individual suggestions, apply the selected changes together, or discard the batch. An immediate undo is available until the resume changes again. Suggestions and undo snapshots stay in browser memory; review actions make no additional AI calls. Editing the resume invalidates the staged batch.
 - In the tailoring drawer, enable **Add hidden keywords** to include terms already supported by your resume in the PDF's invisible text. Some applicant tracking systems show extracted text to recruiters or flag hidden text.
 - Upload a compatible Typst template for the current browser session, separately for the resume and the CV.
 - Convert a DOCX template into a contract-safe Typst design with AI assistance.
