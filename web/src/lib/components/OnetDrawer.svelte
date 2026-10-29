@@ -51,6 +51,7 @@
 	let keywordError = $state('');
 	let tailorController: AbortController | null = null;
 	let tailorRequest = 0;
+	let loadRequest = 0;
 	let searchTimer: ReturnType<typeof setTimeout> | undefined;
 	let drawer = $state<HTMLElement>();
 	let searchInput = $state<HTMLInputElement>();
@@ -116,17 +117,24 @@
 		loading = true;
 		error = '';
 		occupation = null;
+		const requestId = ++loadRequest;
 		try {
 			const res = await fetch(`/api/onet/occupation/${encodeURIComponent(ref.code)}`);
+			if (requestId !== loadRequest) return;
 			if (!res.ok) {
-				error = await readError(res);
+				const message = await readError(res);
+				if (requestId !== loadRequest) return;
+				error = message;
 			} else {
-				occupation = (await res.json()).occupation;
+				const body = await res.json();
+				if (requestId !== loadRequest) return;
+				occupation = body.occupation;
 			}
 		} catch {
+			if (requestId !== loadRequest) return;
 			error = GENERIC_ERROR;
 		} finally {
-			loading = false;
+			if (requestId === loadRequest) loading = false;
 		}
 	}
 
