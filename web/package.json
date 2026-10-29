@@ -16,16 +16,11 @@
 		"test:production": "node --test scripts/production-smoke.mjs"
 	},
 	"devDependencies": {
-		"@sveltejs/adapter-auto": "^7.0.0",
-		"@sveltejs/adapter-static": "^3.0.10",
 		"@sveltejs/adapter-vercel": "^6.3.1",
 		"@sveltejs/kit": "^2.50.1",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@tailwindcss/postcss": "^4.1.18",
-		"@tailwindcss/typography": "^0.5.19",
-		"@tailwindcss/vite": "^4.1.18",
 		"@types/node": "^22.20.2",
-		"autoprefixer": "^10.4.24",
 		"postcss": "^8.5.6",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
