@@ -11,7 +11,8 @@ import type {
 import { isPresentationKind } from './presentation';
 import { normalizeHiddenKeywords } from './hidden-keywords';
 import { isPublicationStatus } from './publication';
-import { generateId } from './resume-utils';
+import { RESUME_STORAGE_KEY } from './resume-backup';
+import { generateId, normalizeDates } from './resume-utils';
 import { customSectionKey, defaultResumeData, defaultSectionOrder, documentTypes } from './types';
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
@@ -103,18 +104,18 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		colors: { ...defaults.colors, ...saved.colors },
 		fonts: { ...defaults.fonts, ...saved.fonts },
 		fontFamilies: { ...defaults.fontFamilies, ...saved.fontFamilies },
-		clearance: arrays('clearance'),
+		clearance: normalizeDates(arrays('clearance'), ['dateGranted']),
 		// Education saved before concentration and minor existed leaves them blank.
-		education: arrays('education').map((entry) => ({
+		education: normalizeDates(arrays('education'), ['startDate', 'endDate']).map((entry) => ({
 			...entry,
 			concentration: text(entry.concentration),
 			minor: text(entry.minor),
 		})),
 		projects: arrays('projects'),
-		workExperience: arrays('workExperience'),
-		leadership: arrays('leadership'),
+		workExperience: normalizeDates(arrays('workExperience'), ['startDate', 'endDate']),
+		leadership: normalizeDates(arrays('leadership'), ['startDate', 'endDate']),
 		skills: arrays('skills'),
-		achievements: arrays('achievements'),
+		achievements: normalizeDates(arrays('achievements'), ['date']),
 		publications: normalizePublications(saved.publications, defaults.publications),
 		publicationAuthorName: text(saved.publicationAuthorName),
 		presentations: normalizePresentations(saved.presentations),
@@ -135,7 +136,7 @@ export function createResumeStore() {
 		loadFromStorage: () => {
 			if (typeof window !== 'undefined') {
 				try {
-					const saved = window.localStorage.getItem('resumeData');
+					const saved = window.localStorage.getItem(RESUME_STORAGE_KEY);
 					if (saved) {
 						set(mergeWithDefaults(JSON.parse(saved)));
 					}
@@ -146,7 +147,7 @@ export function createResumeStore() {
 		},
 		saveToStorage: (data: ResumeData) => {
 			try {
-				if (typeof window !== 'undefined') window.localStorage.setItem('resumeData', JSON.stringify(data));
+				if (typeof window !== 'undefined') window.localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data));
 			} catch (e) {
 				console.error('Failed to save resume data:', e);
 			}

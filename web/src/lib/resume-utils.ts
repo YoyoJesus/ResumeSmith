@@ -1,5 +1,6 @@
 import type { ResumeData, ExtractedResume, DocumentType, FontSettings } from './types';
 import { defaultResumeData, defaultFontSettings, defaultSectionOrder, cvFontSettings } from './types';
+import { joinYearMonth, splitYearMonth } from './year-month';
 
 const documentFontDefaults: Record<DocumentType, FontSettings> = { resume: defaultFontSettings, cv: cvFontSettings };
 
@@ -17,7 +18,20 @@ export function withDocumentType(data: ResumeData, documentType: DocumentType): 
 	};
 }
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Coerces a date to "YYYY-MM", "YYYY" or "" so it renders and passes backup validation. */
+export function normalizeDate(value: unknown): string {
+	const { year, month } = splitYearMonth(value as string);
+	return joinYearMonth(year, month);
+}
+
+/** Normalizes the named date fields of each item. */
+export function normalizeDates<T extends object>(items: T[], keys: (keyof T)[]): T[] {
+	return items.map((item) => {
+		const copy = { ...item };
+		for (const key of keys) copy[key] = normalizeDate(item[key]) as T[keyof T];
+		return copy;
+	});
+}
 
 export function generateId(): string {
 	return Math.random().toString(36).substring(2, 9);
@@ -25,13 +39,6 @@ export function generateId(): string {
 
 export function toSingleLine(value: string): string {
 	return value.replace(/[\r\n]+/g, ' ');
-}
-
-export function formatDate(dateStr: string | undefined): string {
-	if (!dateStr) return '';
-	const [year, month] = dateStr.split('-');
-	const monthName = MONTHS[parseInt(month) - 1];
-	return `${monthName} ${year}`;
 }
 
 // Estimate if resume exceeds one page (rough heuristic based on content)
@@ -61,12 +68,12 @@ export function buildResumeFromExtraction(ex: ExtractedResume): ResumeData {
 		documentType: 'resume',
 		personalInfo: { ...defaultResumeData.personalInfo, ...ex.personalInfo },
 		profile: { summary: ex.profile?.summary ?? '' },
-		education: withId(ex.education ?? []),
+		education: withId(normalizeDates(ex.education ?? [], ['startDate', 'endDate'])),
 		projects: withId(ex.projects ?? []),
-		workExperience: withId(ex.workExperience ?? []),
-		leadership: withId(ex.leadership ?? []),
+		workExperience: withId(normalizeDates(ex.workExperience ?? [], ['startDate', 'endDate'])),
+		leadership: withId(normalizeDates(ex.leadership ?? [], ['startDate', 'endDate'])),
 		skills: withId(ex.skills ?? []),
-		achievements: withId(ex.achievements ?? []),
+		achievements: withId(normalizeDates(ex.achievements ?? [], ['date'])),
 		publications: withId(ex.publications ?? []).map((publication) => ({
 			...publication,
 			volume: '',
@@ -79,7 +86,7 @@ export function buildResumeFromExtraction(ex: ExtractedResume): ResumeData {
 		presentations: [],
 		customSections: [],
 		hiddenKeywords: { enabled: false, keywords: [] },
-		clearance: withId(ex.clearance ?? []),
+		clearance: withId(normalizeDates(ex.clearance ?? [], ['dateGranted'])),
 		colors: { ...defaultResumeData.colors },
 		fonts: { ...defaultFontSettings },
 		fontFamilies: { ...defaultResumeData.fontFamilies },
