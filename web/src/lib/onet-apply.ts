@@ -3,6 +3,19 @@ import type { TailorEdit } from './onet-types';
 import { appendBullet, appendSkill, bulletTargets } from './onet-insert';
 import { addHiddenKeywords, withoutHiddenKeywords } from './hidden-keywords';
 
+type BulletSectionKey = 'workExperience' | 'projects' | 'education' | 'leadership';
+
+function sectionKey(
+	target: ReturnType<typeof bulletTargets>[number] | undefined,
+	next: ResumeData,
+	targetId: string,
+): BulletSectionKey {
+	if (target) {
+		return target.kind === 'experience' ? 'workExperience' : target.kind === 'project' ? 'projects' : target.kind;
+	}
+	return next.education.some((entry) => entry.id === targetId) ? 'education' : 'leadership';
+}
+
 // Apply a batch of AI-proposed edits in order, reusing the same append helpers
 // the manual "+ Add" buttons use so both paths behave identically (including
 // duplicate suppression). Returns the new resume and the dotted paths to
@@ -66,15 +79,15 @@ export function applyTailorEdits(
 				paths.push('profile.summary');
 				continue;
 			}
-			const [section, id] = edit.targetId.split(':');
-			if (section === 'project-stack' && id) {
+			const [sectionName, id] = edit.targetId.split(':');
+			if (sectionName === 'project-stack' && id) {
 				const index = next.projects.findIndex((entry) => entry.id === id);
 				if (index < 0 || next.projects[index].stack === edit.text) continue;
 				const projects = [...next.projects];
 				projects[index] = { ...projects[index], stack: edit.text };
 				next = { ...next, projects };
 				paths.push(`projects.${index}.stack`);
-			} else if (section === 'achievement-description' && id) {
+			} else if (sectionName === 'achievement-description' && id) {
 				const index = next.achievements.findIndex((entry) => entry.id === id);
 				if (index < 0 || next.achievements[index].description === edit.text) continue;
 				const achievements = [...next.achievements];
@@ -108,17 +121,7 @@ export function applyTailorEdits(
 			continue;
 		}
 
-		const key = target
-			? target.kind === 'experience'
-				? 'workExperience'
-				: target.kind === 'project'
-					? 'projects'
-					: target.kind
-			: other
-				? next.education.some((e) => e.id === other.id)
-					? 'education'
-					: 'leadership'
-				: 'projects';
+		const key = sectionKey(target, next, edit.targetId);
 		const entries = next[key];
 		const entryIndex = entries.findIndex((entry) => entry.id === edit.targetId);
 		const entry = entries[entryIndex];
@@ -141,15 +144,7 @@ export function applyTailorEdits(
 			next.education.find((entry) => entry.id === edit.targetId) ??
 			next.leadership.find((entry) => entry.id === edit.targetId);
 		if (!target && !other) continue;
-		const key = target
-			? target.kind === 'experience'
-				? 'workExperience'
-				: target.kind === 'project'
-					? 'projects'
-					: target.kind
-			: next.education.some((entry) => entry.id === edit.targetId)
-				? 'education'
-				: 'leadership';
+		const key = sectionKey(target, next, edit.targetId);
 		const entries = next[key];
 		const entryIndex = entries.findIndex((entry) => entry.id === edit.targetId);
 		const entry = entries[entryIndex];
@@ -172,7 +167,7 @@ export function applyTailorEdits(
 		}
 		const target = bulletTargets(next).find((item) => item.id === highlight.targetId);
 		if (!target) continue;
-		const key = target.kind === 'experience' ? 'workExperience' : target.kind === 'project' ? 'projects' : target.kind;
+		const key = sectionKey(target, next, highlight.targetId);
 		const entryIndex = next[key].findIndex((entry) => entry.id === highlight.targetId);
 		const shift = appliedRemovals.filter(
 			(edit) => edit.targetId === highlight.targetId && edit.originalIndex < highlight.index,

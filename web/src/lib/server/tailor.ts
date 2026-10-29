@@ -4,6 +4,7 @@ import { bulletTargets, skillTargets } from '$lib/onet-insert';
 import { estimateOverOnePage } from '$lib/resume-utils';
 import { MAX_HIDDEN_KEYWORDS, MAX_HIDDEN_KEYWORD_CHARS } from '$lib/hidden-keywords';
 import { serializeResumeText } from '$lib/resume-text';
+import { FONT_SIZE_BOUNDS } from '$lib/fonts';
 
 // A ceiling on how much one click can change, so a runaway response can't
 // rewrite the whole resume in a single pass.
@@ -147,10 +148,10 @@ export const TAILOR_INSTRUCTIONS_BASE = [
 	'A "skill" edit\'s text must be a short skill or technology name, not a sentence.',
 ].join('\n');
 
-export const TAILOR_INSTRUCTIONS = TAILOR_INSTRUCTIONS_BASE;
-
 export function buildTailorInstructions(options: { isOverOnePage: boolean; keywords?: boolean }): string {
-	const fontBounds = 'baseSize=6-14, nameSize=14-32, headingSize=10-24, contactSize=7-16';
+	const fontBounds = Object.entries(FONT_SIZE_BOUNDS)
+		.map(([key, [min, max]]) => `${key}=${min}-${max}`)
+		.join(', ');
 	const lines: string[] = [
 		TAILOR_INSTRUCTIONS_BASE,
 		'',
@@ -214,8 +215,6 @@ export function tailorSchema(keywords: boolean) {
 	} as const;
 }
 
-export const TAILOR_SCHEMA = tailorSchema(false);
-
 export function occupationTerms(occupation: OnetOccupation): string[] {
 	const names = [
 		...occupation.technologySkills.map((technology) => technology.category),
@@ -255,6 +254,11 @@ export function buildTailorInput(
 	const bullets = [...bulletTargets(resume)];
 	const skills = skillTargets(resume);
 	const fields = resume.profile.summary.trim() ? ['profile'] : [];
+	const entryFor = (id: string) =>
+		resume.workExperience.find((w) => w.id === id) ??
+		resume.projects.find((p) => p.id === id) ??
+		resume.education.find((e) => e.id === id) ??
+		resume.leadership.find((e) => e.id === id);
 
 	const isOverOnePage = isValidCompiledPageCount(compiledPageCount)
 		? compiledPageCount > 1
@@ -300,11 +304,7 @@ export function buildTailorInput(
 		'',
 		'=== TARGETS: all resume entries (bullet kinds) ===',
 		...bullets.flatMap((target) => {
-			const entry =
-				resume.workExperience.find((w) => w.id === target.id) ??
-				resume.projects.find((p) => p.id === target.id) ??
-				resume.education.find((e) => e.id === target.id) ??
-				resume.leadership.find((e) => e.id === target.id);
+			const entry = entryFor(target.id);
 			const existing = entry?.bullets.filter(Boolean) ?? [];
 			return [
 				`id=${target.id} | ${target.label}`,
@@ -383,14 +383,7 @@ export function buildTailorInput(
 			skills: new Set(skills.map((s) => s.id)),
 			fields: new Set([...fields, 'baseSize', 'nameSize', 'headingSize', 'contactSize']),
 			bulletCounts: new Map(
-				bullets.map((target) => {
-					const entry =
-						resume.workExperience.find((work) => work.id === target.id) ??
-						resume.projects.find((project) => project.id === target.id) ??
-						resume.education.find((education) => education.id === target.id) ??
-						resume.leadership.find((leadership) => leadership.id === target.id);
-					return [target.id, entry?.bullets.filter(Boolean).length ?? 0];
-				}),
+				bullets.map((target) => [target.id, entryFor(target.id)?.bullets.filter(Boolean).length ?? 0]),
 			),
 			...(options.keywords
 				? {
@@ -455,15 +448,10 @@ export function validateEdits(raw: unknown, allowed: AllowedTargets): TailorEdit
 			if (!term || allowed.visibleText?.includes(term.toLowerCase())) continue;
 			finalText = term;
 		} else if (kind === 'set_font') {
-			const bounds: Record<string, [number, number]> = {
-				baseSize: [6, 14],
-				nameSize: [14, 32],
-				headingSize: [10, 24],
-				contactSize: [7, 16],
-			};
+			if (!Object.hasOwn(FONT_SIZE_BOUNDS, targetId)) continue;
+			const [min, max] = FONT_SIZE_BOUNDS[targetId as keyof typeof FONT_SIZE_BOUNDS];
 			const value = Number(trimmed);
-			const range = bounds[targetId];
-			if (!range || !Number.isFinite(value) || value < range[0] || value > range[1]) continue;
+			if (!Number.isFinite(value) || value < min || value > max) continue;
 		} else if (kind === 'rewrite_field') {
 			if (!allowed.fields?.has(targetId)) continue;
 		} else {

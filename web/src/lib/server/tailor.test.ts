@@ -5,7 +5,6 @@ import {
 	MAX_EDITS,
 	buildTailorInput,
 	isValidTailorResume,
-	TAILOR_SCHEMA,
 	MAX_FIELD_CHARS,
 	MAX_SKILL_CHARS,
 	isValidCompiledPageCount,
@@ -49,7 +48,6 @@ describe('validateEdits', () => {
 				},
 			},
 		});
-		expect(TAILOR_SCHEMA).toEqual(tailorSchema(false));
 		expect(tailorSchema(true).properties.edits.items.properties.kind.enum).toContain('keyword');
 	});
 
@@ -89,7 +87,7 @@ describe('validateEdits', () => {
 	});
 
 	it('requires every declared edit property for strict OpenAI JSON schema compatibility', () => {
-		expect(TAILOR_SCHEMA.properties.edits.items.required).toEqual(['kind', 'targetId', 'text', 'bulletIndex']);
+		expect(tailorSchema(false).properties.edits.items.required).toEqual(['kind', 'targetId', 'text', 'bulletIndex']);
 	});
 
 	it('keeps a well-formed edit', () => {
@@ -102,6 +100,20 @@ describe('validateEdits', () => {
 	// silently become inserts against the wrong entry (or none at all).
 	it('drops an edit whose target id was never offered', () => {
 		expect(validateEdits({ edits: [edit({ targetId: 'nope' })] }, allowed)).toEqual([]);
+	});
+
+	it('drops a set_font edit with prototype target ids like constructor or toString', () => {
+		expect(
+			validateEdits(
+				{
+					edits: [
+						{ kind: 'set_font', targetId: 'constructor', text: '10', bulletIndex: -1 },
+						{ kind: 'set_font', targetId: 'toString', text: '10', bulletIndex: -1 },
+					],
+				},
+				allowed,
+			),
+		).toEqual([]);
 	});
 
 	it('drops a bullet edit aimed at a skill category id', () => {
