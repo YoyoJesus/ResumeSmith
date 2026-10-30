@@ -12,7 +12,7 @@ import { isPresentationKind } from './presentation';
 import { normalizeHiddenKeywords } from './hidden-keywords';
 import { isPublicationStatus } from './publication';
 import { RESUME_STORAGE_KEY } from './resume-backup';
-import { generateId, normalizeDates } from './resume-utils';
+import { generateId } from './resume-utils';
 import { customSectionKey, defaultResumeData, defaultSectionOrder, documentTypes } from './types';
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '');
@@ -104,18 +104,18 @@ export function mergeWithDefaults(saved: Partial<ResumeData>): ResumeData {
 		colors: { ...defaults.colors, ...saved.colors },
 		fonts: { ...defaults.fonts, ...saved.fonts },
 		fontFamilies: { ...defaults.fontFamilies, ...saved.fontFamilies },
-		clearance: normalizeDates(arrays('clearance'), ['dateGranted']),
+		clearance: arrays('clearance'),
 		// Education saved before concentration and minor existed leaves them blank.
-		education: normalizeDates(arrays('education'), ['startDate', 'endDate']).map((entry) => ({
+		education: arrays('education').map((entry) => ({
 			...entry,
 			concentration: text(entry.concentration),
 			minor: text(entry.minor),
 		})),
 		projects: arrays('projects'),
-		workExperience: normalizeDates(arrays('workExperience'), ['startDate', 'endDate']),
-		leadership: normalizeDates(arrays('leadership'), ['startDate', 'endDate']),
+		workExperience: arrays('workExperience'),
+		leadership: arrays('leadership'),
 		skills: arrays('skills'),
-		achievements: normalizeDates(arrays('achievements'), ['date']),
+		achievements: arrays('achievements'),
 		publications: normalizePublications(saved.publications, defaults.publications),
 		publicationAuthorName: text(saved.publicationAuthorName),
 		presentations: normalizePresentations(saved.presentations),
