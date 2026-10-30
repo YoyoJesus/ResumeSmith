@@ -27,9 +27,6 @@ function fail(e: ExtractError): Response {
 // Personalised to the caller's resume, so unlike the other O*NET routes this
 // one must not be cached at the edge.
 export const POST: RequestHandler = async ({ request }) => {
-	const declaredLength = Number(request.headers.get('content-length') ?? 0);
-	if (declaredLength > MAX_TAILOR_BODY_BYTES) return onetFail(onetError('invalid_request', 413));
-
 	let body: Record<string, unknown>;
 	try {
 		const parsed: unknown = JSON.parse(await readBoundedBody(request, MAX_TAILOR_BODY_BYTES));

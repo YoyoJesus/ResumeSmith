@@ -10,3 +10,4 @@ export const MAX_EXTRACT_OUTPUT_TOKENS = 16_000;
 // Each CV part is at most 12,000 characters and uses low reasoning effort, so it needs less room.
 export const MAX_CV_EXTRACT_OUTPUT_TOKENS = 10_000;
 export const MAX_TAILOR_OUTPUT_TOKENS = 8_000;
+export const MAX_TEMPLATE_OUTPUT_TOKENS = 4_000;

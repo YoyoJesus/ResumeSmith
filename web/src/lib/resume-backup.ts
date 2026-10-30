@@ -2,6 +2,7 @@ import { FONT_OPTIONS, FONT_SIZE_BOUNDS } from './fonts';
 import { normalizeHiddenKeywords } from './hidden-keywords';
 import { ONET_STORAGE_KEY } from './onet-store';
 import type { OnetOccupationRef } from './onet-types';
+import { normalizeDates } from './resume-utils';
 import { defaultSectionOrder, documentTypes, type ResumeData, type SectionKey } from './types';
 
 export const BACKUP_VERSION = 1;
@@ -207,8 +208,20 @@ function withinLimit(text: string): void {
 		throw new Error('Backup exceeds the 2 MB size limit.');
 }
 
+/** Saved data can hold free-text dates; only the exported copy is coerced, so the editor keeps the originals. */
+function withBackupDates(resume: ResumeData): ResumeData {
+	return {
+		...resume,
+		clearance: normalizeDates(resume.clearance, ['dateGranted']),
+		education: normalizeDates(resume.education, ['startDate', 'endDate']),
+		workExperience: normalizeDates(resume.workExperience, ['startDate', 'endDate']),
+		leadership: normalizeDates(resume.leadership, ['startDate', 'endDate']),
+		achievements: normalizeDates(resume.achievements, ['date']),
+	};
+}
+
 export function createBackup(resume: ResumeData, occupation: OnetOccupationRef | null): string {
-	const backup = { format: 'resumesmith-backup', version: BACKUP_VERSION, resume, occupation };
+	const backup = { format: 'resumesmith-backup', version: BACKUP_VERSION, resume: withBackupDates(resume), occupation };
 	validateBackup(backup);
 	const text = JSON.stringify(backup, null, 2);
 	withinLimit(text);

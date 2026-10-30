@@ -11,6 +11,7 @@ import type {
 import { isPresentationKind } from './presentation';
 import { normalizeHiddenKeywords } from './hidden-keywords';
 import { isPublicationStatus } from './publication';
+import { RESUME_STORAGE_KEY } from './resume-backup';
 import { generateId } from './resume-utils';
 import { customSectionKey, defaultResumeData, defaultSectionOrder, documentTypes } from './types';
 
@@ -135,7 +136,7 @@ export function createResumeStore() {
 		loadFromStorage: () => {
 			if (typeof window !== 'undefined') {
 				try {
-					const saved = window.localStorage.getItem('resumeData');
+					const saved = window.localStorage.getItem(RESUME_STORAGE_KEY);
 					if (saved) {
 						set(mergeWithDefaults(JSON.parse(saved)));
 					}
@@ -146,7 +147,7 @@ export function createResumeStore() {
 		},
 		saveToStorage: (data: ResumeData) => {
 			try {
-				if (typeof window !== 'undefined') window.localStorage.setItem('resumeData', JSON.stringify(data));
+				if (typeof window !== 'undefined') window.localStorage.setItem(RESUME_STORAGE_KEY, JSON.stringify(data));
 			} catch (e) {
 				console.error('Failed to save resume data:', e);
 			}

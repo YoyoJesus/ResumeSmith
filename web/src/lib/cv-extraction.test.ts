@@ -8,6 +8,7 @@ import {
 	splitCvText,
 	type ExtractedCv,
 } from './cv-extraction';
+import { createBackup } from './resume-backup';
 import { defaultResumeData, cvFontSettings } from './types';
 
 function emptyCv(overrides: Partial<ExtractedCv> = {}): ExtractedCv {
@@ -151,6 +152,31 @@ describe('mergeCvExtractions', () => {
 });
 
 describe('buildResumeFromCvExtraction', () => {
+	it('normalizes structured dates, leaves custom-section dates alone, and stays backup-valid', () => {
+		const data = buildResumeFromCvExtraction(
+			emptyCv({
+				workExperience: [
+					{
+						title: 'Dev',
+						company: 'Acme',
+						location: '',
+						startDate: '2022-5',
+						endDate: '2022-13',
+						isPresent: false,
+						bullets: [],
+					},
+				],
+				achievements: [{ title: 'Award', date: 'Spring 2023', description: '' }],
+				customSections: [{ heading: 'Grants', entries: [{ title: 'G', date: '2019 - 2022', bullets: [] }] }],
+			}),
+		);
+		expect(data.workExperience[0].startDate).toBe('2022-05');
+		expect(data.workExperience[0].endDate).toBe('');
+		expect(data.achievements[0].date).toBe('');
+		expect(data.customSections[0].entries[0].date).toBe('2019 - 2022');
+		expect(() => createBackup(data, null)).not.toThrow();
+	});
+
 	it('builds CV data with ids, CV fonts, and custom sections in the order', () => {
 		const data = buildResumeFromCvExtraction(
 			emptyCv({

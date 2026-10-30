@@ -129,6 +129,23 @@ function storage(initial: Record<string, string> = {}) {
 	};
 }
 
+describe('createBackup with free-text saved dates', () => {
+	it('exports normalized dates without changing the saved resume', () => {
+		const resume = filledResume();
+		resume.workExperience[0].startDate = 'Summer 2022';
+		resume.workExperience[0].endDate = '2022-5';
+		resume.achievements[0].date = 'Spring 2023';
+		resume.education[0].endDate = '2022-13';
+		const exported = parseBackup(createBackup(resume, null)).resume;
+		expect(exported.workExperience[0].startDate).toBe('');
+		expect(exported.workExperience[0].endDate).toBe('2022-05');
+		expect(exported.achievements[0].date).toBe('');
+		expect(exported.education[0].endDate).toBe('');
+		expect(resume.workExperience[0].startDate).toBe('Summer 2022');
+		expect(resume.achievements[0].date).toBe('Spring 2023');
+	});
+});
+
 describe('editable resume backup', () => {
 	it('restores a backup written before hidden keywords existed', () => {
 		const legacy = JSON.parse(createBackup(filledResume(), occupation));

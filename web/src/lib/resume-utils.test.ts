@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildResumeFromExtraction, estimateOverOnePage, toSingleLine, withDocumentType } from './resume-utils';
+import { createBackup } from './resume-backup';
 import { cvFontSettings, defaultFontSettings, defaultResumeData } from './types';
 import type { ExtractedResume, ResumeData } from './types';
 
@@ -27,6 +28,32 @@ describe('buildResumeFromExtraction clearance handling', () => {
 	it('defaults to an empty clearance array when none is extracted', () => {
 		const r = buildResumeFromExtraction({ ...sample, clearance: [] });
 		expect(r.clearance).toEqual([]);
+	});
+});
+
+describe('buildResumeFromExtraction date normalization', () => {
+	it('repairs or blanks model dates so the resume passes backup validation', () => {
+		const r = buildResumeFromExtraction({
+			...sample,
+			workExperience: [
+				{
+					title: 'Dev',
+					company: 'Acme',
+					location: '',
+					startDate: 'Summer 2022',
+					endDate: '2022-5',
+					isPresent: false,
+					bullets: [],
+				},
+			],
+			achievements: [{ title: 'Award', date: 'May 2021', description: '' }],
+			clearance: [{ level: 'Secret', status: 'Active', dateGranted: '2022-6' }],
+		});
+		expect(r.workExperience[0].startDate).toBe('');
+		expect(r.workExperience[0].endDate).toBe('2022-05');
+		expect(r.achievements[0].date).toBe('');
+		expect(r.clearance[0].dateGranted).toBe('2022-06');
+		expect(() => createBackup(r, null)).not.toThrow();
 	});
 });
 

@@ -15,7 +15,7 @@ import type {
 	SectionKey,
 } from './types';
 import { customSectionKey, cvFontSettings, defaultResumeData, defaultSectionOrder } from './types';
-import { generateId } from './resume-utils';
+import { generateId, normalizeDates } from './resume-utils';
 
 /** The size the browser aims for per part. */
 export const CV_CHUNK_CHARS = 10_000;
@@ -170,10 +170,10 @@ export function buildResumeFromCvExtraction(extracted: ExtractedCv): ResumeData 
 		fonts: { ...cvFontSettings },
 		personalInfo: { ...defaultResumeData.personalInfo, ...extracted.personalInfo },
 		profile: { summary: extracted.profile.summary },
-		education: withId(extracted.education),
-		workExperience: withId(extracted.workExperience),
+		education: withId(normalizeDates(extracted.education, ['startDate', 'endDate'])),
+		workExperience: withId(normalizeDates(extracted.workExperience, ['startDate', 'endDate'])),
 		skills: withId(extracted.skills),
-		achievements: withId(extracted.achievements),
+		achievements: withId(normalizeDates(extracted.achievements, ['date'])),
 		publications: withId(extracted.publications),
 		presentations: withId(extracted.presentations),
 		customSections,

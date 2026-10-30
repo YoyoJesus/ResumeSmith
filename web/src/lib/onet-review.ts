@@ -3,6 +3,7 @@ import { withoutHiddenKeywords } from './hidden-keywords';
 import { bulletTargets } from './onet-insert';
 import type { TailorEdit } from './onet-types';
 import type { ResumeData } from './types';
+import { FONT_SIZE_BOUNDS } from './fonts';
 
 export interface TailorSuggestion {
 	id: string;
@@ -56,16 +57,10 @@ function describe(data: ResumeData, edit: TailorEdit): Omit<TailorSuggestion, 'i
 			: null;
 	}
 	if (kind === 'set_font') {
-		const bounds = {
-			baseSize: [6, 14],
-			nameSize: [14, 32],
-			headingSize: [10, 24],
-			contactSize: [7, 16],
-		};
-		if (!Object.hasOwn(bounds, targetId)) return null;
-		const key = targetId as keyof typeof bounds;
+		if (!Object.hasOwn(FONT_SIZE_BOUNDS, targetId)) return null;
+		const key = targetId as keyof typeof FONT_SIZE_BOUNDS;
 		const value = Number(text);
-		const [min, max] = bounds[key];
+		const [min, max] = FONT_SIZE_BOUNDS[key];
 		if (!Number.isFinite(value) || value < min || value > max) return null;
 		const names = { baseSize: 'Body', nameSize: 'Name', headingSize: 'Heading', contactSize: 'Contact' };
 		return {

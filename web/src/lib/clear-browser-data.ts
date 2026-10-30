@@ -35,13 +35,3 @@ export function removeOwnedStorageKeys(
 	}
 	return { removed, failed };
 }
-
-export function clearResumeSmithBrowserStorage(
-	local: Pick<Storage, 'getItem' | 'removeItem'>,
-	session: Pick<Storage, 'getItem' | 'removeItem'>,
-) {
-	return {
-		local: removeOwnedStorageKeys(local, OWNED_LOCAL_STORAGE_KEYS),
-		session: removeOwnedStorageKeys(session, OWNED_SESSION_STORAGE_KEYS),
-	};
-}

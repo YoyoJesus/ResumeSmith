@@ -2,7 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
 import OpenAI from 'openai';
-import { OPENAI_REQUEST_OPTIONS } from '$lib/server/upstream-limits';
+import { MAX_TEMPLATE_OUTPUT_TOKENS, OPENAI_REQUEST_OPTIONS } from '$lib/server/upstream-limits';
 import { mapOpenAIError } from '$lib/server/extraction';
 import { readBoundedBytes, RequestBodyTooLargeError } from '$lib/server/bounded-body';
 import { DOCX_TEMPLATE_MAX_LABEL } from '$lib/template-limits';
@@ -75,7 +75,7 @@ export const POST: RequestHandler = async ({ request }) => {
 					},
 				],
 				reasoning: { effort: 'low' },
-				max_output_tokens: 4_000,
+				max_output_tokens: MAX_TEMPLATE_OUTPUT_TOKENS,
 				store: false,
 				text: {
 					format: {

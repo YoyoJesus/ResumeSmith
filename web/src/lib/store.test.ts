@@ -1,8 +1,33 @@
-import { describe, it, expect } from 'vitest';
-import { mergeWithDefaults } from './store';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { get } from 'svelte/store';
+import { createResumeStore, mergeWithDefaults } from './store';
 import { defaultResumeData } from './types';
 
+afterEach(() => {
+	vi.unstubAllGlobals();
+});
+
+describe('loadFromStorage', () => {
+	it('keeps free-text dates from saved data', () => {
+		const saved = { achievements: [{ id: 'a', title: 'Award', date: 'Spring 2023', description: '' }] };
+		vi.stubGlobal('window', { localStorage: { getItem: () => JSON.stringify(saved) } });
+		const store = createResumeStore();
+		store.loadFromStorage();
+		expect(get(store).achievements[0].date).toBe('Spring 2023');
+	});
+});
+
 describe('mergeWithDefaults', () => {
+	it('does not rewrite saved dates', () => {
+		const merged = mergeWithDefaults({
+			clearance: [{ id: 'c', level: 'Secret', status: 'Active', dateGranted: 'Summer 2022' }],
+			achievements: [{ id: 'a', title: 'Award', date: '2022-5', description: '' }],
+		});
+		expect(merged.clearance[0].dateGranted).toBe('Summer 2022');
+		expect(merged.achievements[0].date).toBe('2022-5');
+		expect(merged.workExperience).toEqual(defaultResumeData.workExperience);
+	});
+
 	it('defaults and normalizes hidden keywords', () => {
 		expect(mergeWithDefaults({}).hiddenKeywords).toEqual({ enabled: false, keywords: [] });
 		expect(
